@@ -138,10 +138,10 @@
   .tstats{display:flex;gap:50px;flex-wrap:wrap;margin-top:30px;}
   .tstat .n{font-size:40px;font-weight:400;letter-spacing:-0.02em;font-family:var(--display);color:var(--ink);} .tstat .l{font-size:13px;color:var(--muted);margin-top:2px;}
   .tslider{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin-top:38px;padding-bottom:6px;} .tslider::-webkit-scrollbar{display:none;}
-  .tcard{flex:0 0 90%;max-width:680px;scroll-snap-align:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:40px 42px;}
+  .tcard{flex:0 0 90%;max-width:680px;scroll-snap-align:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:40px 42px;display:flex;flex-direction:column;}
   @media(min-width:901px){.tcard{flex:0 0 calc(50% - 10px);}}
   .tcard .q{font-size:22px;line-height:1.5;color:var(--ink);font-family:var(--display);font-weight:400;letter-spacing:-0.01em;}
-  .tcard .who{display:flex;align-items:center;gap:12px;margin-top:26px;} .tcard .av{width:42px;height:42px;border-radius:50%;background:#2e271e;border:1px solid var(--line2);flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--amber);}
+  .tcard .who{display:flex;align-items:center;gap:12px;margin-top:auto;padding-top:26px;} .tcard .av{width:42px;height:42px;border-radius:50%;background:#2e271e;border:1px solid var(--line2);flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--amber);}
   .tcard .name{font-size:15px;font-weight:600;color:var(--ink);} .tcard .role{font-size:13px;color:var(--muted);}
   .tnav{display:flex;gap:10px;margin-top:24px;} .tnav button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line2);background:transparent;cursor:pointer;font-size:17px;color:var(--ink);transition:all .2s;} .tnav button:hover{background:var(--amber);color:#1a1510;border-color:var(--amber);}
 
@@ -342,7 +342,7 @@
 <!-- 4b · WHY NOT CHATGPT -->
 <section id="why" class="block white">
   <div class="wrap">
-    <div class="lead-head"><span class="eyebrow">Why not just use ChatGPT?</span><h2>A chatbot is just the start. We build the system.</h2></div>
+    <div class="lead-head"><span class="eyebrow">Why not just use ChatGPT?</span><h2>Anyone can use a chatbot. We build the autonomous systems.</h2></div>
     <div class="vs">
       <div class="vs-col generic"><div class="vs-h">Generic AI</div><ul><li>Lives in a separate tab</li><li>Forgets your models and your voice</li><li>Waits for someone to prompt it</li><li>You don't control your data</li></ul></div>
       <div class="vs-col virtue"><div class="vs-h">Virtue CRE</div><ul><li>Runs inside the tools you already use</li><li>Trained on your models, your voice, your standards</li><li>Runs on its own, you review what matters</li><li>Built on your system, yours to keep forever</li></ul></div>
