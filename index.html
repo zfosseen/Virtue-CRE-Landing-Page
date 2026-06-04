@@ -105,8 +105,23 @@
   .lp-head .lp-irr{font-size:20px;font-weight:600;letter-spacing:-0.02em;color:var(--ink);}
   .lp-head .lp-cap{font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);}
   .lp-chart{height:54px;width:100%;display:block;}
-  .lp-chart .ln-actual{stroke:var(--green);}
+  .lp-chart .ln-actual{stroke:var(--green);stroke-dasharray:600;stroke-dashoffset:0;}
   .lp-chart .ln-target{stroke:var(--amber);opacity:.55;}
+  .card:hover .lp-chart .ln-actual{animation:draw 1.1s ease forwards;}
+  @keyframes draw{from{stroke-dashoffset:600;}to{stroke-dashoffset:0;}}
+  .lp-dates{display:flex;justify-content:space-between;font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--faint);margin-top:5px;}
+  .chip.glow{transition:box-shadow .3s ease,border-color .3s ease;}
+  .card:hover .chip.amber.glow{box-shadow:0 0 14px rgba(214,168,97,0.55);border-color:var(--amber);}
+  .card:hover .chip.green.glow{box-shadow:0 0 14px rgba(156,192,144,0.55);border-color:rgba(156,192,144,0.6);}
+  .chips.flow1{flex-wrap:nowrap;gap:4px;}
+  .chips.flow1 .chip{padding:4px 7px;font-size:9px;}
+  .chips.flow1 .arrow{font-size:10px;}
+  .file-row{display:flex;gap:9px;align-items:flex-start;background:#241f18;border:1px solid var(--line2);border-radius:8px;padding:10px 11px;margin-top:12px;width:100%;}
+  .file-ic{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex:0 0 auto;}
+  .file-ic.xls{background:#1d6f42;}
+  .fr-main{min-width:0;flex:1;}
+  .fr-name{font-size:11px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .fr-sub{font-size:9.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
   /* TESTIMONIALS */
   .tstats{display:flex;gap:50px;flex-wrap:wrap;margin-top:30px;}
@@ -263,15 +278,15 @@
     <div class="lead-head"><span class="eyebrow">What we build</span><h2>Your CRE desk, running itself in the background.</h2><p>Real systems wired into the tools you already use, not chatbots. Each one takes a job that eats your team's hours and quietly runs it.</p></div>
     <div class="cap-grid">
       <div class="card">
-        <div class="screen mock"><div class="email-row"><span class="ava">JP</span><div class="er-main"><div class="er-top"><span class="er-from">Jordan Park</span><span class="er-time">9:14 AM</span></div><div class="er-subj">Stonewood Flats · Offering Memorandum</div><div class="er-prev">Hi, sending the OM and rent roll for your review…</div></div></div><div class="chips" style="margin-top:10px"><span class="chip amber">Draft reply</span><span class="chip">Route to broker</span></div></div>
+        <div class="screen mock"><div class="email-row"><span class="ava">JP</span><div class="er-main"><div class="er-top"><span class="er-from">Jordan Park</span><span class="er-time">9:14 AM</span></div><div class="er-subj">Stonewood Flats · Offering Memorandum</div><div class="er-prev">Hi, sending the OM and rent roll for your review…</div></div></div><div class="chips" style="margin-top:10px"><span class="chip amber glow">Draft reply</span><span class="chip">Route to broker</span></div></div>
         <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><h3>AI Email Agent</h3><p>Drafts, triages, and routes deal and tenant email <b>in your voice</b>, with human checkpoints where they matter.</p><div class="metric"><span class="mb">Inbox triage · 2 hrs/day</span><span class="ma">→ minutes</span></div><a class="more" href="#start">See it live →</a>
       </div>
       <div class="card sage">
-        <div class="screen mock"><div class="lp-head"><div class="lp-metric"><span class="lp-irr">18.4%</span><span class="lp-cap">Net IRR</span></div><span class="chip green">▲ Target 15%</span></div><svg class="lp-chart" viewBox="0 0 260 60" preserveAspectRatio="none"><polyline class="ln-target" points="0,42 52,40 104,38 156,36 208,34 260,32" fill="none" stroke-width="2" stroke-dasharray="4 4"/><polyline class="ln-actual" points="0,50 52,45 104,40 156,29 208,22 260,12" fill="none" stroke-width="2.5"/></svg><div class="chips" style="margin-top:8px"><span class="chip green">Q2 update ready</span></div></div>
+        <div class="screen mock"><div class="lp-head"><div class="lp-metric"><span class="lp-irr">18.4%</span><span class="lp-cap">Net IRR</span></div><span class="chip green">▲ Target 15%</span></div><svg class="lp-chart" viewBox="0 0 260 60" preserveAspectRatio="none"><polyline class="ln-target" points="0,42 52,40 104,38 156,36 208,34 260,32" fill="none" stroke-width="2" stroke-dasharray="4 4"/><polyline class="ln-actual" points="0,50 52,45 104,40 156,29 208,22 260,12" fill="none" stroke-width="2.5"/></svg><div class="lp-dates"><span>Mar</span><span>Jun</span><span>Sep</span><span>Dec</span></div><div class="chips" style="margin-top:7px"><span class="chip green glow">Q2 update ready</span></div></div>
         <span class="ico"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span><h3>LP &amp; Investor Reporting Agent</h3><p>Investor updates and committee memos generated from your <b>live numbers</b>, in your format, ready for review.</p><div class="metric"><span class="mb">Quarter-end IR · 1 week</span><span class="ma">→ 2 hours</span></div><a class="more" href="#start">See it live →</a>
       </div>
       <div class="card">
-        <div class="screen mock"><div class="chips"><span class="chip">OM.pdf</span><span class="arrow">→</span><span class="chip amber">Extract</span><span class="arrow">→</span><span class="chip">Model</span><span class="arrow">→</span><span class="chip green">✓ Scored</span></div><div class="row lg" style="margin-top:12px"></div><div class="row md"></div><div class="row sm"></div></div>
+        <div class="screen mock"><div class="chips flow1"><span class="chip">OM.pdf</span><span class="arrow">→</span><span class="chip amber">Extract</span><span class="arrow">→</span><span class="chip">Model</span><span class="arrow">→</span><span class="chip green">✓ Scored</span></div><div class="file-row"><span class="file-ic xls">X</span><div class="fr-main"><div class="fr-name">Stonewood Flats UW.xlsx</div><div class="fr-sub">Initial underwrite completed, waiting for review</div></div></div></div>
         <span class="ico"><svg viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="m9 14 2 2 4-4"/></svg></span><h3>Underwriting &amp; Lease Abstraction</h3><p>Proposals, OMs, and leases read and run through <b>your model</b>, so a deal lands already analyzed.</p><div class="metric"><span class="mb">Underwrite an OM · 6–8 hrs</span><span class="ma">→ 30 min</span></div><a class="more" href="#start">See it live →</a>
       </div>
       <div class="card">
