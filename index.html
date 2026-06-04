@@ -181,10 +181,26 @@
   .intake.done form{display:none;} .intake.done .ok{display:block;}
 
   /* EVENTS */
-  .ev{display:grid;grid-template-columns:1.1fr 0.9fr;gap:34px;align-items:center;margin-top:40px;} @media(max-width:820px){.ev{grid-template-columns:1fr;}}
+  .ev{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;margin-top:40px;} @media(max-width:820px){.ev{grid-template-columns:1fr;}}
   .ev-card{background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:32px 32px;}
   .ev-card .when{font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--amber);} .ev-card h3{font-size:26px;margin:10px 0 8px;} .ev-card p{font-size:15px;color:var(--muted);margin-bottom:20px;}
   .ev-past{font-size:15px;color:var(--muted);} .ev-past b{color:var(--ink);font-weight:600;}
+  .wl-form{display:flex;gap:8px;flex-wrap:wrap;}
+  .wl-form input{flex:1;min-width:150px;border:1px solid var(--line2);border-radius:999px;padding:11px 16px;font-size:14px;font-family:inherit;background:var(--bg2);color:var(--ink);}
+  .wl-form input::placeholder{color:var(--faint);} .wl-form input:focus{outline:none;border-color:var(--amber);}
+  .wl-done{display:none;font-size:14px;color:var(--green);}
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:100;background:rgba(8,6,5,0.72);backdrop-filter:blur(4px);padding:24px;}
+  .modal-overlay.open{display:flex;align-items:center;justify-content:center;}
+  .modal{background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:34px 32px;max-width:480px;width:100%;position:relative;box-shadow:0 30px 80px rgba(0,0,0,0.6);}
+  .modal-x{position:absolute;top:12px;right:16px;background:none;border:none;color:var(--muted);font-size:26px;line-height:1;cursor:pointer;}
+  .modal-h{font-size:23px;margin-bottom:6px;} .modal-p{font-size:14px;color:var(--muted);margin-bottom:20px;}
+  .modal form{display:flex;flex-direction:column;gap:10px;}
+  .mrow{display:flex;gap:10px;} .mrow input{flex:1;min-width:0;}
+  .modal input,.modal textarea{border:1px solid var(--line2);border-radius:10px;padding:12px 14px;font-size:14px;font-family:inherit;background:var(--bg2);color:var(--ink);width:100%;}
+  .modal input::placeholder,.modal textarea::placeholder{color:var(--faint);} .modal input:focus,.modal textarea:focus{outline:none;border-color:var(--amber);}
+  .modal textarea{resize:vertical;}
+  .modal-ok{display:none;text-align:center;padding:8px 0;} .modal-ok h3{font-size:22px;margin-bottom:8px;} .modal-ok p{font-size:15px;color:var(--muted);}
+  .modal.done form,.modal.done .modal-h,.modal.done .modal-p{display:none;} .modal.done .modal-ok{display:block;}
 
   /* FIT */
   .fit{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:36px;} @media(max-width:820px){.fit{grid-template-columns:1fr;}}
@@ -374,7 +390,6 @@
         <input id="cta-email" type="email" required placeholder="you@yourfirm.com" aria-label="Your work email" />
         <button class="btn btn-primary btn-lg" type="submit">Book a call today</button>
       </form>
-      <p class="cta-done" id="ctaDone">Thanks. Opening your booking page now…</p>
     </div>
   </div>
 </section>
@@ -385,13 +400,20 @@
     <div class="lead-head"><span class="eyebrow">Events</span><h2>Learn among your peers.</h2><p>We bring commercial real estate teams into one room to see AI work on real deals, live. Watch the workflows run, trade notes with peers, and leave knowing exactly where to start.</p></div>
     <div class="ev">
       <div class="ev-card soft">
-        <div class="when">Thursday, June 11 · In person</div>
+        <div class="when">Thursday, June 11 · In person · Seattle</div>
         <h3>Using Claude in CRE</h3>
-        <p>Our first working session for brokers, fund managers, and operators, hosted with CBRE. Seats are limited.</p>
+        <p>Our first working session for brokers, fund managers, and operators. Seats are limited.</p>
         <a class="btn btn-primary" href="https://luma.com/1geogxmi">Join on Luma →</a>
       </div>
-      <div>
-        <p class="ev-past">A hands-on look at what AI can do for a CRE desk. You will see real workflows running on real deals, and leave knowing exactly where to start.</p>
+      <div class="ev-card soft">
+        <div class="when">Thursday, August 6 · In person · San Francisco</div>
+        <h3>CBRE × Virtue: AI in Commercial Real Estate</h3>
+        <p>Hosted with CBRE at Salesforce Tower. A deeper session on putting AI to work across your firm.</p>
+        <form class="wl-form" id="wlForm" onsubmit="return joinWaitlist(event)">
+          <input id="wl-email" type="email" required placeholder="you@yourfirm.com" aria-label="Your work email" />
+          <button class="btn btn-primary" type="submit">Join waitlist</button>
+        </form>
+        <p class="wl-done" id="wlDone">You're on the list. We'll be in touch.</p>
       </div>
     </div>
   </div>
@@ -438,14 +460,45 @@
   </div>
 </footer>
 
+<!-- CALL MODAL -->
+<div class="modal-overlay" id="callModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal()" aria-label="Close">×</button>
+    <h3 class="modal-h">Let's set up your call.</h3>
+    <p class="modal-p">Tell us a bit and we will reach out personally to find a time.</p>
+    <form id="callForm" onsubmit="return submitCall(event)">
+      <div class="mrow"><input id="cf-first" type="text" required placeholder="First name" /><input id="cf-last" type="text" required placeholder="Last name" /></div>
+      <div class="mrow"><input id="cf-company" type="text" required placeholder="Company" /><input id="cf-phone" type="tel" placeholder="Phone number" /></div>
+      <input id="cf-email" type="email" required placeholder="Work email" />
+      <textarea id="cf-desc" rows="3" placeholder="Briefly, what parts of your business are you looking to automate?"></textarea>
+      <button class="btn btn-primary btn-lg" type="submit" style="margin-top:6px;width:100%;">Request my call</button>
+    </form>
+    <div class="modal-ok"><h3>Thanks, you're all set.</h3><p>We will reach out to schedule your call shortly.</p></div>
+  </div>
+</div>
+
 <script>
   function bookCall(e){
     e.preventDefault();
-    var email=document.getElementById('cta-email').value;
-    try{ fetch('/api/cre-intake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,intent:'book-call'})}); }catch(err){}
-    document.getElementById('ctaForm').style.display='none';
-    document.getElementById('ctaDone').style.display='block';
-    setTimeout(function(){ window.location.href='https://calendly.com/foss-virtue'; }, 900);
+    document.getElementById('cf-email').value=document.getElementById('cta-email').value;
+    document.getElementById('callModal').classList.add('open');
+    return false;
+  }
+  function closeModal(){ document.getElementById('callModal').classList.remove('open'); }
+  function gv(id){ return document.getElementById(id).value; }
+  function submitCall(e){
+    e.preventDefault();
+    var d={firstName:gv('cf-first'),lastName:gv('cf-last'),company:gv('cf-company'),phone:gv('cf-phone'),email:gv('cf-email'),notes:gv('cf-desc'),intent:'book-call'};
+    try{ fetch('/api/cre-intake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}); }catch(err){}
+    document.querySelector('#callModal .modal').classList.add('done');
+    return false;
+  }
+  function joinWaitlist(e){
+    e.preventDefault();
+    var email=document.getElementById('wl-email').value;
+    try{ fetch('/api/cre-intake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,intent:'waitlist-sf'})}); }catch(err){}
+    document.getElementById('wlForm').style.display='none';
+    document.getElementById('wlDone').style.display='block';
     return false;
   }
   function toggleAcme(){
