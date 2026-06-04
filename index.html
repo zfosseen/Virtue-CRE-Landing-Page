@@ -81,8 +81,8 @@
 
   /* FIVE-BOX GRID */
   .cap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px;}
-  @media(min-width:901px){.cap-grid{grid-template-columns:repeat(6,1fr);} .card{grid-column:span 2;} .card:nth-child(4){grid-column:2 / span 2;} .card:nth-child(5){grid-column:4 / span 2;}}
-  @media(max-width:900px){.cap-grid{grid-template-columns:1fr;}}
+  @media(max-width:900px){.cap-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:560px){.cap-grid{grid-template-columns:1fr;}}
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;transition:box-shadow .35s ease, transform .35s ease, border-color .35s ease;}
   .card:hover{border-color:rgba(214,168,97,0.4);box-shadow:0 0 0 1px rgba(214,168,97,0.12),0 24px 56px rgba(0,0,0,0.5);transform:translateY(-3px);}
   .card .screen{height:148px;margin-bottom:18px;display:flex;flex-direction:column;justify-content:center;gap:9px;}
@@ -90,6 +90,23 @@
   .card .ico svg{width:20px;height:20px;stroke:var(--amber);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
   .card.sage .ico{background:rgba(156,192,144,0.12);border-color:rgba(156,192,144,0.28);} .card.sage .ico svg{stroke:var(--green);}
   .card h3{font-size:20px;margin-bottom:8px;} .card p{font-size:14.5px;color:var(--muted);} .card p b{color:var(--ink);font-weight:600;} .card .more{display:inline-block;margin-top:14px;font-size:13.5px;font-weight:600;color:var(--amber);}
+  .card.custom{border-style:dashed;border-color:var(--line2);}
+  .qmark{font-family:var(--display);font-size:44px;line-height:1;color:var(--amber);opacity:.55;margin-bottom:10px;}
+  .email-row{display:flex;align-items:flex-start;gap:9px;background:#241f18;border:1px solid var(--line2);border-radius:8px;padding:10px 11px;width:100%;}
+  .email-row .unread{width:7px;height:7px;border-radius:50%;background:var(--amber);flex:0 0 auto;margin-top:5px;}
+  .email-row .er-subj{font-size:12px;font-weight:600;color:var(--ink);}
+  .email-row .er-prev{font-size:10.5px;color:var(--muted);margin-top:2px;}
+  .email-row .er-time{margin-left:auto;font-size:9.5px;color:var(--faint);flex:0 0 auto;}
+  .lp-head{display:flex;align-items:baseline;gap:8px;margin-bottom:14px;width:100%;}
+  .lp-head .lp-irr{font-size:22px;font-weight:600;letter-spacing:-0.02em;color:var(--ink);}
+  .lp-head .lp-cap{font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);}
+  .lp-head .chip{margin-left:auto;}
+  .bars{display:flex;align-items:flex-end;gap:6px;height:56px;width:100%;}
+  .bars span{flex:1;background:var(--green);opacity:.6;border-radius:3px 3px 0 0;height:var(--h);transform-origin:bottom;}
+  .bars span:last-child{opacity:1;}
+  .card:hover .bars span{animation:barjump .9s ease-in-out infinite;}
+  .card:hover .bars span:nth-child(2){animation-delay:.08s} .card:hover .bars span:nth-child(3){animation-delay:.16s} .card:hover .bars span:nth-child(4){animation-delay:.24s} .card:hover .bars span:nth-child(5){animation-delay:.32s} .card:hover .bars span:nth-child(6){animation-delay:.4s}
+  @keyframes barjump{0%,100%{transform:scaleY(1);}30%{transform:scaleY(1.28);}65%{transform:scaleY(0.72);}}
 
   /* TESTIMONIALS */
   .tstats{display:flex;gap:50px;flex-wrap:wrap;margin-top:30px;}
@@ -246,11 +263,11 @@
     <div class="lead-head"><span class="eyebrow">What we build</span><h2>Your CRE desk, running itself in the background.</h2><p>Real systems wired into the tools you already use, not chatbots. Each one takes a job that eats your team's hours and quietly runs it.</p></div>
     <div class="cap-grid">
       <div class="card">
-        <div class="screen mock"><div class="bar"><span class="dot amber"></span><span class="dot"></span><span class="dot"></span></div><div class="row lg"></div><div class="row md"></div><div class="chips" style="margin-top:4px"><span class="chip amber">Draft reply</span><span class="chip">Route to broker</span></div></div>
+        <div class="screen mock"><div class="email-row"><span class="unread"></span><div style="flex:1"><div class="er-subj">Stonewood Flats</div><div class="er-prev">New offering memorandum attached</div></div><span class="er-time">9:14</span></div><div class="chips" style="margin-top:10px"><span class="chip amber">Draft reply</span><span class="chip">Route to broker</span></div></div>
         <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><h3>AI Email Agent</h3><p>Drafts, triages, and routes deal and tenant email <b>in your voice</b>, with human checkpoints where they matter.</p><div class="metric"><span class="mb">Inbox triage · 2 hrs/day</span><span class="ma">→ minutes</span></div><a class="more" href="#start">See it live →</a>
       </div>
       <div class="card sage">
-        <div class="screen mock"><div class="bar"><span class="dot green"></span><span class="dot"></span></div><div class="row md"></div><div class="row lg"></div><svg class="spark" style="height:26px" viewBox="0 0 280 26" preserveAspectRatio="none"><polyline points="0,20 50,16 100,18 150,10 200,12 280,5" fill="none" stroke-width="2"/></svg><div class="chips"><span class="chip green">Q2 update ready</span></div></div>
+        <div class="screen mock"><div class="lp-head"><span class="lp-irr">18.4%</span><span class="lp-cap">Net IRR · Q2</span><span class="chip green">▲ Target 15%</span></div><div class="bars"><span style="--h:42%"></span><span style="--h:60%"></span><span style="--h:50%"></span><span style="--h:72%"></span><span style="--h:64%"></span><span style="--h:86%"></span></div><div class="chips" style="margin-top:9px"><span class="chip green">Q2 update ready</span></div></div>
         <span class="ico"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span><h3>LP &amp; Investor Reporting Agent</h3><p>Investor updates and committee memos generated from your <b>live numbers</b>, in your format, ready for review.</p><div class="metric"><span class="mb">Quarter-end IR · 1 week</span><span class="ma">→ 2 hours</span></div><a class="more" href="#start">See it live →</a>
       </div>
       <div class="card">
@@ -264,6 +281,10 @@
       <div class="card sage">
         <div class="screen mock"><div class="tiles"><div class="t"><div class="n">94%</div><div class="l">Occupancy</div></div><div class="t"><div class="n">$2.1M</div><div class="l">NOI</div></div><div class="t"><div class="n">5</div><div class="l">Renewals</div></div></div><svg class="spark" style="height:30px;margin-top:8px" viewBox="0 0 280 30" preserveAspectRatio="none"><polyline points="0,22 50,20 100,14 150,16 200,9 280,7" fill="none" stroke-width="2"/></svg></div>
         <span class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 21v-4h6v4"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01"/></svg></span><h3>Property Management Dashboard</h3><p>Portfolio health, occupancy, and <b>key dates</b> unified for the people who decide.</p><div class="metric"><span class="mb">Portfolio update · 2 days</span><span class="ma">→ 30 min</span></div><a class="more" href="#start">See it live →</a>
+      </div>
+      <div class="card custom">
+        <div class="screen mock" style="align-items:center;justify-content:center;text-align:center;"><div class="qmark">?</div><div class="chips" style="justify-content:center"><span class="chip">Your process</span><span class="arrow">→</span><span class="chip amber">Custom agent</span></div></div>
+        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.4 2.4 0 0 1 4.4 1.5c0 1.6-2 2-2.1 3.2"/><path d="M12 17h.01"/></svg></span><h3>Custom-Built Agent</h3><p>Don't see the workflow you need? Send us your process and documents, and we will build a dedicated AI employee around it, <b>scoped and deployed in the environment of your choosing</b>.</p><a class="more" href="#start">Build the spec →</a>
       </div>
     </div>
   </div>
