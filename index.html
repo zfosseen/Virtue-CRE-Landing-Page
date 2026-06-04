@@ -133,6 +133,9 @@
   .wo-txt{font-size:11px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .wo-st{margin-left:auto;font-size:9px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--faint);flex:0 0 auto;}
   .wo-st.amber{color:var(--amber);} .wo-st.green{color:var(--green);}
+  .wo.live{transition:box-shadow .3s ease,border-color .3s ease;}
+  .card:hover .wo.live{border-color:rgba(214,168,97,0.55);box-shadow:0 0 16px rgba(214,168,97,0.4);animation:shake .45s ease-in-out 2;}
+  @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-2px);}40%{transform:translateX(2px);}60%{transform:translateX(-1.5px);}80%{transform:translateX(1.5px);}}
 
   /* TESTIMONIALS */
   .tstats{display:flex;gap:50px;flex-wrap:wrap;margin-top:30px;}
@@ -295,7 +298,7 @@
         <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><h3>Acquisitions Dashboard</h3><p>Every deal, its stage, and <b>what needs you today</b>, pulled into one morning screen.</p><div class="metric"><span class="mb">Morning deal review · 90 min</span><span class="ma">→ 5 min</span></div><a class="more" href="#start">See it live →</a>
       </div>
       <div class="card sage">
-        <div class="screen mock"><div class="wo-head">Work orders<span class="wo-count">3 open · avg 1.2d</span></div><div class="wo-list"><div class="wo"><span class="wo-dot amber"></span><span class="wo-txt">Unit 204 · HVAC</span><span class="wo-st amber">In progress</span></div><div class="wo"><span class="wo-dot green"></span><span class="wo-txt">Unit 110 · Leak</span><span class="wo-st green">New</span></div><div class="wo"><span class="wo-dot"></span><span class="wo-txt">Common · Lighting</span><span class="wo-st">Scheduled</span></div></div></div>
+        <div class="screen mock"><div class="wo-head">Work orders<span class="wo-count">3 open · avg 1.2d</span></div><div class="wo-list"><div class="wo live"><span class="wo-dot amber"></span><span class="wo-txt">Unit 204 · HVAC</span><span class="wo-st amber">In progress</span></div><div class="wo"><span class="wo-dot green"></span><span class="wo-txt">Unit 110 · Leak</span><span class="wo-st green">New</span></div><div class="wo"><span class="wo-dot"></span><span class="wo-txt">Common · Lighting</span><span class="wo-st">Scheduled</span></div></div></div>
         <span class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 21v-4h6v4"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01"/></svg></span><h3>Property Management Dashboard</h3><p>Portfolio health, occupancy, and <b>key dates</b> unified for the people who decide.</p><div class="metric"><span class="mb">Portfolio update · 2 days</span><span class="ma">→ 30 min</span></div><a class="more" href="#start">See it live →</a>
       </div>
       <div class="card custom">
@@ -343,7 +346,7 @@
     <div class="lead-head"><span class="eyebrow">Why not just use ChatGPT?</span><h2>Anyone can use a chatbot. We build the autonomous systems.</h2></div>
     <div class="vs">
       <div class="vs-col generic"><div class="vs-h">Generic AI</div><ul><li>Lives in a separate tab</li><li>Forgets your models and your voice</li><li>Waits for someone to prompt it</li><li>You don't control your data</li></ul></div>
-      <div class="vs-col virtue"><div class="vs-h">Virtue CRE</div><ul><li>Runs inside the tools you already use</li><li>Trained on your models, your voice, your standards</li><li>Runs on its own, you review what matters</li><li>Built on your system, yours to keep forever</li></ul></div>
+      <div class="vs-col virtue"><div class="vs-h">Virtue</div><ul><li>Runs inside the tools you already use</li><li>Trained on your models, your voice, your standards</li><li>Runs on its own, you review what matters</li><li>Built on your system, yours to keep forever</li></ul></div>
     </div>
   </div>
 </section>
