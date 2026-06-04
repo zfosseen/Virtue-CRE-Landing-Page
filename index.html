@@ -291,8 +291,8 @@
         <div class="screen mock"><div class="chips flow1"><span class="chip">OM.pdf</span><span class="arrow">→</span><span class="chip amber">Extract</span><span class="arrow">→</span><span class="chip">Model</span><span class="arrow">→</span><span class="chip green glow">Comps</span></div><div class="file-row"><span class="file-ic xls">X</span><div class="fr-main"><div class="fr-name">Stonewood Flats UW.xlsx</div><div class="fr-sub">Initial underwrite completed, waiting for review</div></div></div></div>
         <span class="ico"><svg viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="m9 14 2 2 4-4"/></svg></span><h3>Underwriting &amp; Lease Abstraction</h3><p>Proposals, OMs, and leases read and run through <b>your model</b>, so a deal lands already analyzed.</p><div class="metric"><span class="mb">Underwrite an OM · 6–8 hrs</span><span class="ma">→ 30 min</span></div><a class="more" href="#start">See it live →</a>
       </div>
-      <div class="card">
-        <div class="screen mock"><div class="tiles"><div class="t"><div class="n">$142M</div><div class="l">Pipeline</div></div><div class="t"><div class="n">7</div><div class="l">Deals</div></div><div class="t"><div class="n">3</div><div class="l">Due</div></div></div><div class="pipe"><span class="on"></span><span class="on"></span><span></span><span></span></div></div>
+      <div class="card" onmouseenter="acqCount()">
+        <div class="screen mock"><div class="tiles"><div class="t"><div class="n" id="m-port">$892M</div><div class="l">Total portfolio</div></div><div class="t"><div class="n" id="m-close">$60M</div><div class="l">Closing 30d</div></div><div class="t"><div class="n" id="m-ytd2">$252M</div><div class="l">Closed YTD</div></div></div><div class="pipe"><span class="on"></span><span class="on"></span><span></span><span></span></div></div>
         <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><h3>Acquisitions Dashboard</h3><p>Every deal, its stage, and <b>what needs you today</b>, pulled into one morning screen.</p><div class="metric"><span class="mb">Morning deal review · 90 min</span><span class="ma">→ 5 min</span></div><a class="more" href="#start">See it live →</a>
       </div>
       <div class="card sage">
@@ -495,6 +495,7 @@
     requestAnimationFrame(step);
   }
   function runCounts(){ countUp('m-pipe',640,1000); countUp('m-ytd',210,1300); }
+  function acqCount(){ countUp('m-port',892,900); countUp('m-close',60,900); countUp('m-ytd2',252,1100); }
   runCounts();
   var heroMock=document.querySelector('.hero-mock'); if(heroMock) heroMock.addEventListener('mouseenter', runCounts);
 </script>
