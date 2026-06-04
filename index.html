@@ -92,21 +92,21 @@
   .card h3{font-size:20px;margin-bottom:8px;} .card p{font-size:14.5px;color:var(--muted);} .card p b{color:var(--ink);font-weight:600;} .card .more{display:inline-block;margin-top:14px;font-size:13.5px;font-weight:600;color:var(--amber);}
   .card.custom{border-style:dashed;border-color:var(--line2);}
   .qmark{font-family:var(--display);font-size:44px;line-height:1;color:var(--amber);opacity:.55;margin-bottom:10px;}
-  .email-row{display:flex;align-items:flex-start;gap:9px;background:#241f18;border:1px solid var(--line2);border-radius:8px;padding:10px 11px;width:100%;}
-  .email-row .unread{width:7px;height:7px;border-radius:50%;background:var(--amber);flex:0 0 auto;margin-top:5px;}
-  .email-row .er-subj{font-size:12px;font-weight:600;color:var(--ink);}
-  .email-row .er-prev{font-size:10.5px;color:var(--muted);margin-top:2px;}
-  .email-row .er-time{margin-left:auto;font-size:9.5px;color:var(--faint);flex:0 0 auto;}
-  .lp-head{display:flex;align-items:baseline;gap:8px;margin-bottom:14px;width:100%;}
-  .lp-head .lp-irr{font-size:22px;font-weight:600;letter-spacing:-0.02em;color:var(--ink);}
+  .email-row{display:flex;gap:10px;background:#241f18;border:1px solid var(--line2);border-left:2.5px solid var(--amber);border-radius:8px;padding:10px 11px;width:100%;}
+  .email-row .ava{width:26px;height:26px;border-radius:50%;background:#3a3127;color:var(--ink);font-size:9.5px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .email-row .er-main{flex:1;min-width:0;}
+  .email-row .er-top{display:flex;align-items:baseline;gap:8px;}
+  .email-row .er-from{font-size:11.5px;font-weight:700;color:var(--ink);}
+  .email-row .er-time{margin-left:auto;font-size:9px;color:var(--faint);flex:0 0 auto;}
+  .email-row .er-subj{font-size:11px;font-weight:600;color:var(--ink);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .email-row .er-prev{font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .lp-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;width:100%;flex-wrap:wrap;}
+  .lp-head .lp-metric{display:flex;align-items:baseline;gap:6px;}
+  .lp-head .lp-irr{font-size:20px;font-weight:600;letter-spacing:-0.02em;color:var(--ink);}
   .lp-head .lp-cap{font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);}
-  .lp-head .chip{margin-left:auto;}
-  .bars{display:flex;align-items:flex-end;gap:6px;height:56px;width:100%;}
-  .bars span{flex:1;background:var(--green);opacity:.6;border-radius:3px 3px 0 0;height:var(--h);transform-origin:bottom;}
-  .bars span:last-child{opacity:1;}
-  .card:hover .bars span{animation:barjump .9s ease-in-out infinite;}
-  .card:hover .bars span:nth-child(2){animation-delay:.08s} .card:hover .bars span:nth-child(3){animation-delay:.16s} .card:hover .bars span:nth-child(4){animation-delay:.24s} .card:hover .bars span:nth-child(5){animation-delay:.32s} .card:hover .bars span:nth-child(6){animation-delay:.4s}
-  @keyframes barjump{0%,100%{transform:scaleY(1);}30%{transform:scaleY(1.28);}65%{transform:scaleY(0.72);}}
+  .lp-chart{height:54px;width:100%;display:block;}
+  .lp-chart .ln-actual{stroke:var(--green);}
+  .lp-chart .ln-target{stroke:var(--amber);opacity:.55;}
 
   /* TESTIMONIALS */
   .tstats{display:flex;gap:50px;flex-wrap:wrap;margin-top:30px;}
@@ -263,11 +263,11 @@
     <div class="lead-head"><span class="eyebrow">What we build</span><h2>Your CRE desk, running itself in the background.</h2><p>Real systems wired into the tools you already use, not chatbots. Each one takes a job that eats your team's hours and quietly runs it.</p></div>
     <div class="cap-grid">
       <div class="card">
-        <div class="screen mock"><div class="email-row"><span class="unread"></span><div style="flex:1"><div class="er-subj">Stonewood Flats</div><div class="er-prev">New offering memorandum attached</div></div><span class="er-time">9:14</span></div><div class="chips" style="margin-top:10px"><span class="chip amber">Draft reply</span><span class="chip">Route to broker</span></div></div>
+        <div class="screen mock"><div class="email-row"><span class="ava">JP</span><div class="er-main"><div class="er-top"><span class="er-from">Jordan Park</span><span class="er-time">9:14 AM</span></div><div class="er-subj">Stonewood Flats · Offering Memorandum</div><div class="er-prev">Hi, sending the OM and rent roll for your review…</div></div></div><div class="chips" style="margin-top:10px"><span class="chip amber">Draft reply</span><span class="chip">Route to broker</span></div></div>
         <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><h3>AI Email Agent</h3><p>Drafts, triages, and routes deal and tenant email <b>in your voice</b>, with human checkpoints where they matter.</p><div class="metric"><span class="mb">Inbox triage · 2 hrs/day</span><span class="ma">→ minutes</span></div><a class="more" href="#start">See it live →</a>
       </div>
       <div class="card sage">
-        <div class="screen mock"><div class="lp-head"><span class="lp-irr">18.4%</span><span class="lp-cap">Net IRR · Q2</span><span class="chip green">▲ Target 15%</span></div><div class="bars"><span style="--h:42%"></span><span style="--h:60%"></span><span style="--h:50%"></span><span style="--h:72%"></span><span style="--h:64%"></span><span style="--h:86%"></span></div><div class="chips" style="margin-top:9px"><span class="chip green">Q2 update ready</span></div></div>
+        <div class="screen mock"><div class="lp-head"><div class="lp-metric"><span class="lp-irr">18.4%</span><span class="lp-cap">Net IRR</span></div><span class="chip green">▲ Target 15%</span></div><svg class="lp-chart" viewBox="0 0 260 60" preserveAspectRatio="none"><polyline class="ln-target" points="0,42 52,40 104,38 156,36 208,34 260,32" fill="none" stroke-width="2" stroke-dasharray="4 4"/><polyline class="ln-actual" points="0,50 52,45 104,40 156,29 208,22 260,12" fill="none" stroke-width="2.5"/></svg><div class="chips" style="margin-top:8px"><span class="chip green">Q2 update ready</span></div></div>
         <span class="ico"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span><h3>LP &amp; Investor Reporting Agent</h3><p>Investor updates and committee memos generated from your <b>live numbers</b>, in your format, ready for review.</p><div class="metric"><span class="mb">Quarter-end IR · 1 week</span><span class="ma">→ 2 hours</span></div><a class="more" href="#start">See it live →</a>
       </div>
       <div class="card">
