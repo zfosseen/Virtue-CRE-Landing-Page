@@ -199,15 +199,6 @@
   .metric{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12.5px;}
   .metric .mb{color:var(--faint);} .metric .ma{color:var(--amber);font-weight:600;}
 
-  /* PRINCIPAL / BROKER TOGGLE */
-  .toggle{display:inline-flex;gap:4px;background:var(--card);border:1px solid var(--line2);border-radius:999px;padding:4px;margin-top:30px;}
-  .tg-btn{border:none;background:transparent;color:var(--muted);padding:10px 24px;border-radius:999px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all .2s;}
-  .tg-btn.active{background:var(--ink);color:var(--bg);}
-  .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:32px;}
-  @media(max-width:820px){.flow{grid-template-columns:1fr;}}
-  .flow-col{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 24px;}
-  .flow-k{font-size:12px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--amber);margin-bottom:16px;}
-  .flow-col ul{list-style:none;} .flow-col li{font-size:15px;color:var(--muted);padding-left:18px;position:relative;margin-bottom:10px;} .flow-col li::before{content:"";position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:var(--amber);}
   [hidden]{display:none!important;}
 
   /* TRUST STRIP */
@@ -312,27 +303,6 @@
         <div class="screen mock" style="align-items:center;justify-content:center;text-align:center;"><div class="bigflow">Your process,<br><span class="hl">automated</span></div></div>
         <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9z"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17z"/></svg></span><h3>Custom-Built Agent</h3><p>Don't see the workflow you need? Send us your process and documents, and we will build a dedicated AI employee around it, <b>scoped and deployed in the environment of your choosing</b>.</p><a class="more" href="#start">Build the spec →</a>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- 3b · PRINCIPAL / BROKER -->
-<section id="workflows" class="block">
-  <div class="wrap">
-    <div class="lead-head"><span class="eyebrow">Built around your role</span><h2>The same system, tuned to how you work.</h2></div>
-    <div class="toggle">
-      <button class="tg-btn active" data-side="principal" onclick="setSide('principal')">Principal side</button>
-      <button class="tg-btn" data-side="broker" onclick="setSide('broker')">Broker side</button>
-    </div>
-    <div class="flow" id="flow-principal">
-      <div class="flow-col"><div class="flow-k">Find</div><ul><li>Off-market deals matched to your buy-box</li><li>Loan-maturity and ownership signals</li><li>Owner outreach and contact resolution</li></ul></div>
-      <div class="flow-col"><div class="flow-k">Close</div><ul><li>OMs, rent rolls, and T-12s underwritten</li><li>IC memos drafted from your model</li><li>LP outreach and capital tracking</li></ul></div>
-      <div class="flow-col"><div class="flow-k">Operate</div><ul><li>Portfolio P&amp;L and asset reporting</li><li>Lease and covenant tracking</li><li>LP letters and hold-vs-sell memos</li></ul></div>
-    </div>
-    <div class="flow" id="flow-broker" hidden>
-      <div class="flow-col"><div class="flow-k">Find</div><ul><li>Prospect and comp research</li><li>Tenant and buyer matching</li><li>Business-development outreach at scale</li></ul></div>
-      <div class="flow-col"><div class="flow-k">Close</div><ul><li>BOVs and proposals generated</li><li>Tours scheduled and tracked</li><li>Deal docs and follow-up drafted</li></ul></div>
-      <div class="flow-col"><div class="flow-k">Operate</div><ul><li>Pipeline tracked on one screen</li><li>Client and listing reporting</li><li>Lease expirations surfaced early</li></ul></div>
     </div>
   </div>
 </section>
@@ -487,11 +457,6 @@
     try{ fetch('/api/cre-intake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})}); }catch(err){}
     document.getElementById('intake').classList.add('done');
     return false;
-  }
-  function setSide(s){
-    document.querySelectorAll('.tg-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.side===s); });
-    document.getElementById('flow-principal').hidden = (s!=='principal');
-    document.getElementById('flow-broker').hidden = (s!=='broker');
   }
   function toggleAcme(){
     var c=document.getElementById('acme-check'); var f=document.getElementById('acme-flags');
