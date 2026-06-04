@@ -17,3 +17,7 @@ dist/
 *.pem
 *.key
 secrets.*
+
+# Local working notes (not part of the deliverable)
+WORKLOG.md
+_*.html
