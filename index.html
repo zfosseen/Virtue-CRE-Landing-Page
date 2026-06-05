@@ -251,6 +251,7 @@
       <a href="#capabilities">What we build</a>
       <a href="#results">Testimonials</a>
       <a href="#events">Events</a>
+      <a href="about.html">About</a>
       <a href="#faq">FAQ</a>
       <a href="#start" class="btn btn-primary">Get Started Today</a>
     </nav>
@@ -455,7 +456,7 @@
 <footer>
   <div class="wrap foot">
     <div class="col" style="max-width:30ch;"><div class="brand" style="margin-bottom:12px;"><img class="logo" src="assets/virtue-logo.png" alt="Virtue" /><span class="cre">CRE</span></div><p>The AI build partner for commercial real estate. Built into your firm, owned by your team.</p></div>
-    <div class="col"><p class="k">Explore</p><p><a href="#capabilities">What we build</a></p><p><a href="#results">Testimonials</a></p><p><a href="#events">Events</a></p><p><a href="#faq">FAQ</a></p></div>
+    <div class="col"><p class="k">Explore</p><p><a href="#capabilities">What we build</a></p><p><a href="#results">Testimonials</a></p><p><a href="#events">Events</a></p><p><a href="about.html">About</a></p><p><a href="#faq">FAQ</a></p></div>
     <div class="col"><p class="k">Contact</p><p><a href="mailto:foss@virtue.company">foss@virtue.company</a></p><p><a href="#start">Get Started Today</a></p><p><a href="https://virtue.company">virtue.company</a></p></div>
   </div>
 </footer>
@@ -486,11 +487,15 @@
   }
   function closeModal(){ document.getElementById('callModal').classList.remove('open'); }
   function gv(id){ return document.getElementById(id).value; }
+  var INTAKE_EMAIL='foss@virtue.company';
   function submitCall(e){
     e.preventDefault();
     var d={firstName:gv('cf-first'),lastName:gv('cf-last'),company:gv('cf-company'),phone:gv('cf-phone'),email:gv('cf-email'),notes:gv('cf-desc'),intent:'book-call'};
     try{ fetch('/api/cre-intake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}); }catch(err){}
+    var subject='New call request — '+d.firstName+' '+d.lastName+' ('+d.company+')';
+    var body='Name: '+d.firstName+' '+d.lastName+'\nCompany: '+d.company+'\nPhone: '+(d.phone||'—')+'\nEmail: '+d.email+'\n\nLooking to automate:\n'+(d.notes||'—');
     document.querySelector('#callModal .modal').classList.add('done');
+    window.location.href='mailto:'+INTAKE_EMAIL+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
     return false;
   }
   function joinWaitlist(e){
@@ -499,6 +504,9 @@
     try{ fetch('/api/cre-intake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,intent:'waitlist-sf'})}); }catch(err){}
     document.getElementById('wlForm').style.display='none';
     document.getElementById('wlDone').style.display='block';
+    var subject='SF event waitlist — '+email;
+    var body='Add to the August 6 San Francisco (CBRE × Virtue) waitlist:\n\nEmail: '+email;
+    window.location.href='mailto:'+INTAKE_EMAIL+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
     return false;
   }
   function toggleAcme(){
