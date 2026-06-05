@@ -1,0 +1,2599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Acme Real Estate — Acquisitions Desk · Virtue interactive demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- ============================================================
+     MAP INTEGRATION
+     ============================================================
+     This build uses Leaflet + CartoDB Voyager tiles for production-
+     grade map rendering. To swap to Google Maps:
+       1. Get a Google Maps JS API key
+       2. Set GOOGLE_MAPS_KEY constant in <script> below
+       3. The map auto-detects the key and switches providers
+     Both providers support custom markers, popups, and clustering.
+     ============================================================ -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+  :root {
+    --bg: #F5F2EC;
+    --surface: #FFFFFF;
+    --surface-2: #FAF8F3;
+    --ink: #18181B;
+    --ink-soft: #3F3F46;
+    --muted: #71717A;
+    --muted-soft: #A1A1AA;
+    --line: #E7E5E0;
+    --line-strong: #D4D2CC;
+    --accent: #1E3A5F;
+    --accent-soft: #E0E7F0;
+    --accent-ink: #0F1F3D;
+    --warn: #92400E;
+    --warn-soft: #FEF3C7;
+    --alert: #991B1B;
+    --alert-soft: #FEE2E2;
+    --good: #166534;
+    --good-soft: #DCFCE7;
+
+    --stage-source: #6B4423;     --stage-source-soft: #FEF3C7;
+    --stage-screen: #134E4A;     --stage-screen-soft: #CCFBF1;
+    --stage-uw: #92400E;          --stage-uw-soft: #FED7AA;
+    --stage-ic: #1E3A5F;          --stage-ic-soft: #DBEAFE;
+    --stage-close: #166534;       --stage-close-soft: #DCFCE7;
+    --stage-am: #6B21A8;          --stage-am-soft: #EDE9FE;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); font-family: 'DM Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+
+  .container { max-width: 1380px; margin: 0 auto; padding: 24px 24px 80px; }
+
+  /* ============== TOP NAV ============== */
+  .topnav {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .nav-left { display: flex; align-items: center; gap: 16px; }
+  .nav-logo {
+    width: 36px; height: 36px;
+    background: var(--ink);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.04em;
+  }
+  .nav-brand-text { line-height: 1.2; }
+  .nav-brand-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .nav-brand-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .search-bar {
+    flex: 1;
+    max-width: 460px;
+    position: relative;
+  }
+  .search-bar input {
+    width: 100%;
+    background: var(--bg);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2371717A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><path d='m21 21-4.35-4.35'/></svg>");
+    background-repeat: no-repeat;
+    background-position: 12px center;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 14px 9px 36px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    transition: all 0.15s;
+  }
+  .search-bar input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background-color: var(--surface);
+  }
+  .nav-actions { display: flex; gap: 8px; align-items: center; }
+  .nav-btn {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 8px 14px;
+    border-radius: 7px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-btn:hover { background: var(--surface-2); border-color: var(--line-strong); }
+  .nav-btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .nav-btn.primary:hover { background: #000; }
+  .nav-bell {
+    position: relative;
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--ink-soft);
+    transition: all 0.15s;
+  }
+  .nav-bell:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-bell-badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    background: var(--alert);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 600;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--surface);
+  }
+  .user-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ============== HEADER ============== */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 24px;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .brand-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .brand-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 36px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-top: 4px;
+  }
+  .brand-sub {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+  .header-meta {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .header-meta .live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--good);
+  }
+  .header-meta .live::before {
+    content: '';
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--good);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(22,101,52,0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(22,101,52,0); }
+    100% { box-shadow: 0 0 0 0 rgba(22,101,52,0); }
+  }
+
+  /* ============== TODAY PANEL ============== */
+  .today-panel {
+    background: linear-gradient(135deg, #FFF8E7 0%, #FFFBED 100%);
+    border: 1px solid #F4E4BC;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .today-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--warn);
+    font-weight: 600;
+    padding-right: 14px;
+    border-right: 1px solid #E5D4A8;
+    flex-shrink: 0;
+  }
+  .today-items { display: flex; gap: 12px; flex-wrap: wrap; flex: 1; }
+  .today-item {
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(146,64,14,0.15);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .today-item:hover {
+    background: rgba(255,255,255,0.95);
+    color: var(--ink);
+  }
+  .today-item-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--warn);
+    flex-shrink: 0;
+  }
+  .today-item-dot.alert { background: var(--alert); }
+  .today-item-dot.good { background: var(--good); }
+  .today-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  /* ============== SECTION HEADS ============== */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 32px 0 16px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .section-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ============== TILES ============== */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+  .tile {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: all 0.15s;
+  }
+  .tile:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+  .tile-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .tile-value {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+  }
+  .tile-meta {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+  .tile-meta.up { color: var(--good); }
+  .tile-meta.down { color: var(--alert); }
+
+  /* ============== MAP ============== */
+  .map-section {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .map-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .map-legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .map-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .map-legend-item:hover { background: var(--surface-2); }
+  .map-legend-item.dimmed { opacity: 0.4; }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 1.5px solid #fff;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+  }
+  #leafletMap {
+    height: 460px;
+    width: 100%;
+    background: #E8E4DA;
+  }
+  /* Custom Leaflet marker */
+  .map-marker {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .map-marker:hover { transform: scale(1.25); }
+  .leaflet-popup-content-wrapper {
+    border-radius: 10px;
+    padding: 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    border: 1px solid var(--line);
+  }
+  .leaflet-popup-content { margin: 0; min-width: 220px; }
+  .map-popup {
+    padding: 14px 16px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .map-popup-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .map-popup-title {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+    margin-top: 2px;
+  }
+  .map-popup-meta {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  .map-popup-meta strong { color: var(--ink); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .map-popup-cta {
+    display: inline-block;
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    cursor: pointer;
+    border-bottom: 1px solid var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .leaflet-container a.leaflet-popup-close-button { color: var(--muted); padding: 6px 8px 0 0; }
+
+  /* ============== PIPELINE BOARD ============== */
+  .pipeline-board {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .stage-col {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 12px;
+    min-height: 220px;
+  }
+  .stage-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .stage-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .stage-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface-2);
+    padding: 2px 7px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+  }
+  .deal-card {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .deal-card:hover {
+    background: #fff;
+    border-color: var(--line-strong);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+  }
+  .deal-card-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+  .deal-card-meta {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .deal-card-tag {
+    font-size: 10px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.04em;
+  }
+
+  /* ============== DEAL TABLE ============== */
+  .deal-table {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .deal-table-head, .deal-row {
+    display: grid;
+    grid-template-columns: minmax(260px, 2.4fr) 120px 110px 70px 100px 80px 36px;
+    align-items: center;
+  }
+  .deal-table-head {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .deal-table-head .num, .deal-row .num { text-align: right; }
+  .deal-row {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .deal-row:last-child { border-bottom: none; }
+  .deal-row:hover { background: var(--surface-2); }
+  .deal-row .num { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink); }
+  .deal-name { font-weight: 600; font-size: 14px; color: var(--ink); display: block; }
+  .deal-address { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; }
+  .stage-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    display: inline-block;
+  }
+  .stage-pill.source { background: var(--stage-source-soft); color: var(--stage-source); }
+  .stage-pill.screen { background: var(--stage-screen-soft); color: var(--stage-screen); }
+  .stage-pill.uw { background: var(--stage-uw-soft); color: var(--stage-uw); }
+  .stage-pill.ic { background: var(--stage-ic-soft); color: var(--stage-ic); }
+  .stage-pill.close { background: var(--stage-close-soft); color: var(--stage-close); }
+  .stage-pill.am { background: var(--stage-am-soft); color: var(--stage-am); }
+  .owner-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .owner-badge.eric { background: #6B4423; }
+  .owner-badge.jack { background: #134E4A; }
+  .col-arrow { color: var(--muted); text-align: right; font-size: 16px; }
+
+  .pipeline-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .pipeline-tab {
+    background: transparent;
+    border: 1px solid var(--line);
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pipeline-tab:hover { background: var(--surface-2); }
+  .pipeline-tab.active {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+
+  /* ============== MODAL ============== */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(24,24,27,0.5);
+    z-index: 1000;
+    display: none;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .modal-backdrop.open { display: block; }
+  .modal {
+    background: var(--bg);
+    max-width: 1180px;
+    margin: 16px auto;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  .modal-head {
+    background: var(--surface);
+    padding: 22px 32px 0;
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .modal-head-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding-bottom: 18px;
+  }
+  .modal-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    line-height: 1.15;
+  }
+  .modal-address {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .modal-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-align: right;
+    line-height: 1.7;
+  }
+  .modal-actions { display: flex; gap: 8px; align-items: flex-start; margin-top: 4px; }
+  .close-btn, .icon-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .close-btn:hover, .icon-btn:hover {
+    background: var(--surface-2);
+    border-color: var(--line-strong);
+  }
+
+  /* Modal tabs */
+  .modal-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+    margin: 0 -32px;
+    padding: 0 32px;
+    overflow-x: auto;
+  }
+  .modal-tab {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+    margin-bottom: -1px;
+  }
+  .modal-tab:hover { color: var(--ink-soft); }
+  .modal-tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* Hero metrics */
+  .hero-metrics {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .hero-metric {
+    background: var(--surface);
+    padding: 16px;
+  }
+  .hero-metric-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .hero-metric-value {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    margin-top: 4px;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  .hero-metric-meta {
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 3px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Modal body */
+  .modal-body {
+    padding: 22px 32px 40px;
+    background: var(--bg);
+  }
+  .modal-section {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 14px;
+  }
+  .modal-section-title {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-section-title .sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 400;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  /* Property hero */
+  .property-hero {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .property-image {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    height: 300px;
+    position: relative;
+  }
+  .property-image img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform 0.4s;
+  }
+  .property-image:hover img { transform: scale(1.04); }
+  .property-image-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    pointer-events: none;
+  }
+  .image-thumbs {
+    display: flex;
+    gap: 6px;
+    padding: 8px;
+    background: rgba(255,255,255,0.95);
+    position: absolute;
+    bottom: 12px; left: 12px;
+    border-radius: 6px;
+    backdrop-filter: blur(8px);
+  }
+  .image-thumb {
+    width: 40px; height: 30px;
+    border-radius: 4px;
+    background-size: cover;
+    background-position: center;
+    border: 1.5px solid #fff;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .image-thumb.active { border-color: var(--accent); }
+
+  /* AI dig */
+  .ai-dig {
+    background: linear-gradient(135deg, #FAF8F3 0%, #F5F2EC 100%);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    height: 300px;
+    overflow-y: auto;
+  }
+  .ai-dig-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .ai-badge {
+    background: var(--ink);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 3px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+  .ai-dig-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .ai-fact {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+    padding-left: 12px;
+    border-left: 2px solid var(--line-strong);
+    line-height: 1.5;
+  }
+  .ai-fact strong { color: var(--ink); font-weight: 600; }
+
+  /* Tables */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .data-table th {
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 500;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .data-table th.num { text-align: right; }
+  .data-table td {
+    padding: 11px 8px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-soft);
+  }
+  .data-table td.num { text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--ink); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr.total td {
+    font-weight: 600;
+    color: var(--ink);
+    border-top: 1px solid var(--line-strong);
+    background: var(--surface-2);
+  }
+
+  /* Spec list (Main Info / Pricing) */
+  .spec-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    font-size: 13px;
+  }
+  .spec-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .spec-row:last-child { border-bottom: none; }
+  .spec-label { color: var(--ink-soft); }
+  .spec-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    color: var(--ink);
+    font-size: 13px;
+  }
+
+  /* DD checklist */
+  .checklist-phase { margin-bottom: 14px; }
+  .checklist-phase-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .checklist-phase-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .checklist-phase-progress {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .checklist-items { margin-top: 8px; }
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .checklist-item:last-child { border-bottom: none; }
+  .checkbox {
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--line-strong);
+    border-radius: 3px;
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .checkbox.done { background: var(--good); border-color: var(--good); color: #fff; font-size: 10px; }
+  .checkbox.in-progress { background: var(--stage-uw-soft); border-color: var(--stage-uw); }
+  .item-text { flex: 1; color: var(--ink-soft); }
+  .item-text.done { color: var(--muted); text-decoration: line-through; }
+  .item-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+
+  /* File list */
+  .file-list { display: flex; flex-direction: column; gap: 6px; }
+  .file-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    transition: all 0.12s;
+    cursor: pointer;
+  }
+  .file-row:hover { background: #fff; border-color: var(--line-strong); }
+  .file-icon {
+    width: 30px; height: 38px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; font-weight: 600;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .file-icon.xlsx { color: var(--good); }
+  .file-icon.pdf { color: var(--alert); }
+  .file-icon.docx { color: var(--stage-ic); }
+  .file-icon.jpg { color: var(--stage-am); }
+  .file-name { flex: 1; font-size: 13px; color: var(--ink); }
+  .file-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+  .upload-zone {
+    margin-top: 10px;
+    border: 1.5px dashed var(--line-strong);
+    border-radius: 6px;
+    padding: 14px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .upload-zone:hover {
+    background: var(--surface-2);
+    border-color: var(--accent);
+    color: var(--ink-soft);
+  }
+
+  /* Rent vs mortgage */
+  .rent-mort-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .rm-stat {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+  .rm-stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .rm-stat-value {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .rm-stat-meta { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .rm-takeaway {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    padding-left: 12px;
+    border-left: 2px solid var(--accent);
+  }
+
+  /* Critical dates */
+  .dates-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .date-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 14px;
+    background: var(--surface);
+    font-size: 13px;
+  }
+  .date-label { color: var(--ink-soft); }
+  .date-value {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .date-value.warn { color: var(--warn); }
+  .date-value.alert { color: var(--alert); }
+  .date-value.good { color: var(--good); }
+
+  /* Sensitivity highlight row */
+  .sensitivity-table th { background: var(--accent); color: #fff; padding: 8px; }
+  .sensitivity-table th.num { color: #fff; }
+
+  /* Contact card */
+  .contact-card {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .contact-card-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .contact-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--ink);
+    margin-top: 4px;
+  }
+  .contact-org { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .contact-info {
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+  }
+
+  /* Activity timeline */
+  .activity-list { display: flex; flex-direction: column; }
+  .activity-item {
+    display: grid;
+    grid-template-columns: 90px 24px 1fr;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+    align-items: flex-start;
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .activity-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--line-strong);
+    margin-top: 4px;
+    margin-left: 6px;
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--line-strong);
+  }
+  .activity-dot.ai { background: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+  .activity-dot.alert { background: var(--alert); box-shadow: 0 0 0 1px var(--alert); }
+  .activity-dot.good { background: var(--good); box-shadow: 0 0 0 1px var(--good); }
+  .activity-content { color: var(--ink-soft); line-height: 1.5; }
+  .activity-content strong { color: var(--ink); font-weight: 600; }
+
+  /* Demographics */
+  .demo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .demo-col { background: var(--surface); padding: 14px 16px; }
+  .demo-col-head {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  .demo-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: 12px;
+  }
+  .demo-row span:first-child { color: var(--ink-soft); }
+  .demo-row span:last-child { font-family: 'JetBrains Mono', monospace; color: var(--ink); font-weight: 500; }
+
+  /* Memo */
+  .memo-doc {
+    background: var(--surface);
+    padding: 28px 36px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    font-family: 'Fraunces', serif;
+    line-height: 1.65;
+    color: var(--ink);
+    font-size: 14px;
+  }
+  .memo-doc h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .memo-doc .memo-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .memo-doc h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 600;
+    margin-top: 18px;
+    margin-bottom: 6px;
+    color: var(--accent);
+  }
+  .memo-doc p { margin-bottom: 10px; color: var(--ink-soft); }
+  .memo-doc ul { margin-left: 18px; margin-bottom: 10px; color: var(--ink-soft); }
+  .memo-doc li { margin-bottom: 4px; }
+
+  /* Comp set */
+  .comp-section { margin-bottom: 18px; }
+  .comp-section-head {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .footer-brand {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  /* Responsive */
+  @media (max-width: 1100px) {
+    .summary-grid { grid-template-columns: repeat(3, 1fr); }
+    .pipeline-board { grid-template-columns: repeat(3, 1fr); }
+    .hero-metrics { grid-template-columns: repeat(3, 1fr); }
+    .property-hero { grid-template-columns: 1fr; }
+    .property-image { height: 240px; }
+    .ai-dig { height: auto; max-height: 320px; }
+    .demo-grid { grid-template-columns: 1fr; }
+    .demo-col { border-bottom: 1px solid var(--line); }
+  }
+  @media (max-width: 720px) {
+    .container { padding: 16px 14px 60px; }
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .pipeline-board { grid-template-columns: 1fr 1fr; }
+    .hero-metrics { grid-template-columns: 1fr 1fr; }
+    .grid-2, .grid-3, .rent-mort-grid { grid-template-columns: 1fr; }
+    .deal-table-head, .deal-row { grid-template-columns: minmax(140px, 2fr) 100px 100px 36px; }
+    .deal-table-head .col-units, .deal-row .col-units,
+    .deal-table-head .col-ppu, .deal-row .col-ppu,
+    .deal-table-head .col-cap, .deal-row .col-cap,
+    .header { flex-direction: column; align-items: flex-start; }
+    .header-meta { text-align: left; }
+    .modal { margin: 4px; border-radius: 10px; }
+    .modal-head, .modal-body { padding-left: 16px; padding-right: 16px; }
+    .modal-tabs { margin: 0 -16px; padding: 0 16px; }
+    .modal-title { font-size: 22px; }
+    #leafletMap { height: 320px; }
+    .topnav { flex-direction: column; align-items: stretch; gap: 10px; }
+    .search-bar { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div style="background:#1C1A17;color:#f3f1ec;font-size:13px;line-height:1.3;padding:9px 20px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;text-align:center;">
+  <span style="opacity:.82;">Interactive demo · sample data, not a real portfolio</span>
+  <a href="index.html" style="color:#f3f1ec;opacity:.82;text-decoration:underline;">Back to Virtue CRE</a>
+  <a href="index.html#start" style="background:#d6a861;color:#1a1510;font-weight:600;padding:5px 15px;border-radius:999px;text-decoration:none;">Book a call</a>
+</div>
+
+<div class="container">
+
+  <!-- ============== TOP NAV ============== -->
+  <nav class="topnav">
+    <div class="nav-left">
+      <div class="nav-logo">A</div>
+      <div class="nav-brand-text">
+        <div class="nav-brand-name">Acme Real Estate</div>
+        <div class="nav-brand-sub">Acquisitions Workspace</div>
+      </div>
+    </div>
+    <div class="search-bar">
+      <input type="text" placeholder="Search deals, contacts, files, markets..." />
+    </div>
+    <div class="nav-actions">
+      <button class="nav-btn primary">+ New Deal</button>
+      <button class="nav-btn">Export</button>
+      <div class="nav-bell" title="Notifications">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="nav-bell-badge">3</span>
+      </div>
+      <div class="user-avatar" style="background:var(--accent);font-size:10px;letter-spacing:0.02em;">ARE</div>
+    </div>
+  </nav>
+
+  <!-- ============== HEADER ============== -->
+  <header class="header">
+    <div>
+      <span class="brand-eyebrow">Acquisitions · Multifamily · Q2 2026</span>
+      <h1 class="brand-title">Deal Desk</h1>
+      <span class="brand-sub">Live pipeline, mapping, and underwriting across the Pacific Northwest &amp; Southwest</span>
+    </div>
+    <div class="header-meta">
+      <div class="live">SYNCED · 4:12 PM PDT</div>
+      <div>Monday · May 4, 2026</div>
+    </div>
+  </header>
+
+  <!-- ============== TEAM STRIP ============== -->
+  <div style="display:flex; align-items:center; gap:20px; margin-bottom:18px; padding:12px 18px; background:var(--surface); border:1px solid var(--line); border-radius:10px; flex-wrap:wrap;">
+    <span style="font-family:'JetBrains Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); padding-right:16px; border-right:1px solid var(--line); flex-shrink:0;">Acquisitions Team</span>
+    <div style="display:flex; gap:16px; flex-wrap:wrap;">
+      <div style="display:flex; align-items:center; gap:9px;">
+        <div style="width:30px;height:30px;border-radius:50%;background:#1E3A5F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">MR</div>
+        <div><div style="font-size:13px;font-weight:600;color:var(--ink);line-height:1.2;">Marcus Reed</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Chief Acq. Officer</div></div>
+      </div>
+      <div style="display:flex; align-items:center; gap:9px;">
+        <div style="width:30px;height:30px;border-radius:50%;background:#0F1F3D;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">AP</div>
+        <div><div style="font-size:13px;font-weight:600;color:var(--ink);line-height:1.2;">Alan Pierce</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Managing Principal</div></div>
+      </div>
+      <div style="display:flex; align-items:center; gap:9px;">
+        <div style="width:30px;height:30px;border-radius:50%;background:#134E4A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">SK</div>
+        <div><div style="font-size:13px;font-weight:600;color:var(--ink);line-height:1.2;">Sam Keller</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Capital Markets</div></div>
+      </div>
+      <div style="display:flex; align-items:center; gap:9px;">
+        <div style="width:30px;height:30px;border-radius:50%;background:#6B4423;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">TB</div>
+        <div><div style="font-size:13px;font-weight:600;color:var(--ink);line-height:1.2;">Tyler Brooks</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Acq. &amp; Underwriting</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== TODAY PANEL ============== -->
+  <div class="today-panel">
+    <span class="today-label">Today</span>
+    <div class="today-items">
+      <div class="today-item" onclick="openDeal('arthouse')">
+        <span class="today-item-dot alert"></span>
+        <strong>Funding 12/18</strong> — Harbor House · Sam needs wire confirm
+      </div>
+      <div class="today-item" onclick="openDeal('biltmore-camelback')">
+        <span class="today-item-dot"></span>
+        <strong>Lease-up tracker</strong> — Desert Vista Y1 occupancy 91% vs UW 93%
+      </div>
+      <div class="today-item">
+        <span class="today-item-dot"></span>
+        <strong>Property tax notice</strong> — Maricopa County · 4 properties
+      </div>
+      <div class="today-item">
+        <span class="today-item-dot good"></span>
+        <strong>Q4 distributions</strong> — Fund V review by Friday
+      </div>
+    </div>
+    <span class="today-meta">4 items</span>
+  </div>
+
+  <!-- ============== PIPELINE OVERVIEW TILES ============== -->
+  <div class="section-head">
+    <h2 class="section-title">Pipeline Overview</h2>
+    <span class="section-sub">9 deals · 1,925 units · $755.8M total</span>
+  </div>
+  <div class="summary-grid">
+    <div class="tile">
+      <span class="tile-label">Total Portfolio</span>
+      <span class="tile-value">$755.8M</span>
+      <span class="tile-meta">9 deals · 1,925 units</span>
+    </div>
+    <div class="tile">
+      <span class="tile-label">Closing 30 Days</span>
+      <span class="tile-value">$47.8M</span>
+      <span class="tile-meta">1 deal · Harbor House</span>
+    </div>
+    <div class="tile">
+      <span class="tile-label">Closed YTD</span>
+      <span class="tile-value">$708.1M</span>
+      <span class="tile-meta up">9 deals · 1,786 units</span>
+    </div>
+    <div class="tile">
+      <span class="tile-label">Avg $/Unit</span>
+      <span class="tile-value">$367.8K</span>
+      <span class="tile-meta">YTD weighted average</span>
+    </div>
+    <div class="tile">
+      <span class="tile-label">Wtd. Avg. Cap</span>
+      <span class="tile-value">4.62%</span>
+      <span class="tile-meta">In-place · stabilized</span>
+    </div>
+  </div>
+
+  <!-- ============== MAP ============== -->
+  <div class="section-head" style="margin-top:32px;">
+    <h2 class="section-title">Portfolio Map</h2>
+    <span class="section-sub">Click any pin · click legend to filter</span>
+  </div>
+  <div class="map-section">
+    <div class="map-header">
+      <div class="map-legend" id="mapLegend">
+        <div class="map-legend-item" data-stage="source"><span class="legend-dot" style="background:#6B4423"></span>Sourcing</div>
+        <div class="map-legend-item" data-stage="screen"><span class="legend-dot" style="background:#134E4A"></span>Screening</div>
+        <div class="map-legend-item" data-stage="uw"><span class="legend-dot" style="background:#92400E"></span>Underwriting</div>
+        <div class="map-legend-item" data-stage="ic"><span class="legend-dot" style="background:#1E3A5F"></span>IC Review</div>
+        <div class="map-legend-item" data-stage="close"><span class="legend-dot" style="background:#166534"></span>Closing</div>
+        <div class="map-legend-item" data-stage="am"><span class="legend-dot" style="background:#6B21A8"></span>Asset Mgmt</div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);">14 properties · Western US</div>
+    </div>
+    <div id="leafletMap"></div>
+  </div>
+
+  <!-- ============== PIPELINE BOARD ============== -->
+  <div class="section-head" style="margin-top:32px;">
+    <h2 class="section-title">Live Pipeline</h2>
+    <span class="section-sub">Drag between stages · Click for detail</span>
+  </div>
+  <div class="pipeline-board">
+    <div class="stage-col"><div class="stage-head"><span class="stage-name">Sourcing</span><span class="stage-count" id="cnt-source"></span></div><div id="col-source"></div></div>
+    <div class="stage-col"><div class="stage-head"><span class="stage-name">Screening</span><span class="stage-count" id="cnt-screen"></span></div><div id="col-screen"></div></div>
+    <div class="stage-col"><div class="stage-head"><span class="stage-name">Underwriting</span><span class="stage-count" id="cnt-uw"></span></div><div id="col-uw"></div></div>
+    <div class="stage-col"><div class="stage-head"><span class="stage-name">IC Review</span><span class="stage-count" id="cnt-ic"></span></div><div id="col-ic"></div></div>
+    <div class="stage-col"><div class="stage-head"><span class="stage-name">Closing</span><span class="stage-count" id="cnt-close"></span></div><div id="col-close"></div></div>
+    <div class="stage-col"><div class="stage-head"><span class="stage-name">Asset Mgmt</span><span class="stage-count" id="cnt-am"></span></div><div id="col-am"></div></div>
+  </div>
+
+  <!-- ============== DEAL TABLE ============== -->
+  <div class="section-head">
+    <h2 class="section-title">All Deals</h2>
+    <span class="section-sub" id="pipelineCount">9 deals</span>
+  </div>
+  <div class="pipeline-tabs">
+    <button class="pipeline-tab active" data-tab="all">All</button>
+    <button class="pipeline-tab" data-tab="active">Active Pipeline</button>
+    <button class="pipeline-tab" data-tab="am">Asset Mgmt</button>
+    <button class="pipeline-tab" data-tab="phx">Phoenix · AZ</button>
+    <button class="pipeline-tab" data-tab="sea">Seattle</button>
+    <button class="pipeline-tab" data-tab="lv">Las Vegas</button>
+  </div>
+  <div class="deal-table">
+    <div class="deal-table-head">
+      <div>Property</div>
+      <div class="col-stage">Stage</div>
+      <div class="num">Price</div>
+      <div class="num col-units">Units</div>
+      <div class="num col-ppu">$/Unit</div>
+      <div class="num col-cap">Cap</div>
+      <div></div>
+    </div>
+    <div id="dealTable"></div>
+  </div>
+
+  <footer class="footer">
+    <div>
+      <div>Powered by Virtue · ai.virtue.company</div>
+      <div style="margin-top: 4px;">Built for Acme Real Estate · Beta v0.2</div>
+    </div>
+    <div class="footer-brand">"One desk. Every deal."</div>
+  </footer>
+
+</div>
+
+<!-- DEAL DETAIL MODAL -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+/* ==============================================================
+   GOOGLE MAPS SWAP-IN
+   --------------------------------------------------------------
+   To use Google Maps instead of Leaflet+CartoDB:
+     1. Get a Google Maps JS API key from console.cloud.google.com
+     2. Set: const GOOGLE_MAPS_KEY = 'your_key_here';
+     3. Reload. Map auto-detects key and switches to Google.
+   --------------------------------------------------------------
+   Leaflet + CartoDB Voyager tiles look indistinguishable from
+   Google Maps in production and are used by major real estate
+   platforms. Both providers are wired to the same data layer.
+   ============================================================== */
+const GOOGLE_MAPS_KEY = ''; // <-- drop key here when ready
+
+// ============== DEAL DATA ==============
+const deals = [
+  // Harbor House — CLOSING
+  {
+    id: 'arthouse', stage: 'close', name: 'Harbor House',
+    addr: 'Bellevue, WA',
+    market: 'Seattle', units: 139, price: 47760000, ppu: 343597,
+    owner: 'eric', built: 2020, type: 'Core+',
+    stageLabel: 'Closing 12/18/25 · Sam',
+    whisper: 47760000, whisperRSF: 388, whisperSF: 268,
+    siteSF: 142000, rentableSF: 123078, avgSF: 886, parking: 1.21,
+    irr: 13.80, cap: 4.45, yoc: 5.10, em: 1.85, roc: 5.62, cashOnCash: 4.10, equityReq: 17200000,
+    lat: 47.6151, lng: -122.2015,
+    broker: 'CBRE Seattle · Chris Morgan', brokerPhone: '206.555.0142', brokerEmail: 'c.morgan@cbre.com',
+    seller: 'Cascade Property Group', equityPartner: 'Meridian Capital V · 85% LP', lender: 'Summit Bank · committed $30.5M',
+    img: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e9e3d6%22%2F%3E%3Crect%20x%3D%2260%22%20y%3D%22120%22%20width%3D%22110%22%20height%3D%22130%22%20fill%3D%22%23baa784%22%2F%3E%3Crect%20x%3D%22270%22%20y%3D%22150%22%20width%3D%2280%22%20height%3D%22100%22%20fill%3D%22%23baa784%22%2F%3E%3Crect%20x%3D%22160%22%20y%3D%2280%22%20width%3D%22120%22%20height%3D%22170%22%20fill%3D%22%23c9b89a%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%22248%22%20width%3D%22400%22%20height%3D%2252%22%20fill%3D%22%23d8cdb8%22%2F%3E%3C%2Fsvg%3E',
+    listed: '11/02/2025', cfo: '11/18/2025'
+  },
+  // ASSET MANAGEMENT — closed deals from spreadsheet
+  { id: 'biltmore-camelback', stage: 'am', name: 'Desert Vista', addr: 'Phoenix, AZ', market: 'Phoenix', units: 270, price: 97450000, ppu: 360926, owner: 'don', stageLabel: 'Closed 1/22/26', lat: 33.5092, lng: -112.0303, img: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e6e7e0%22%2F%3E%3Crect%20x%3D%2260%22%20y%3D%22120%22%20width%3D%22110%22%20height%3D%22130%22%20fill%3D%22%23a7af9c%22%2F%3E%3Crect%20x%3D%22270%22%20y%3D%22150%22%20width%3D%2280%22%20height%3D%22100%22%20fill%3D%22%23a7af9c%22%2F%3E%3Crect%20x%3D%22160%22%20y%3D%2280%22%20width%3D%22120%22%20height%3D%22170%22%20fill%3D%22%23b9bfb0%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%22248%22%20width%3D%22400%22%20height%3D%2252%22%20fill%3D%22%23d3d6cc%22%2F%3E%3C%2Fsvg%3E', built: 2013, type: 'Stabilized', broker: 'CBRE Phoenix', seller: 'Sterling Residential LLC', whisper: 97450000, whisperRSF: 454, whisperSF: 236, siteSF: 412000, rentableSF: 214380, avgSF: 794, parking: 1.51, irr: 15.50, cap: 4.45, yoc: 5.20, em: 1.95 },
+  { id: 'scottsdale-grand', stage: 'am', name: 'Old Town Grand', addr: 'Scottsdale, AZ', market: 'Scottsdale', units: 285, price: 117000000, ppu: 410526, owner: 'don', stageLabel: 'Closed Apr 2024', lat: 33.5400, lng: -111.9252, img: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e8e2dd%22%2F%3E%3Crect%20x%3D%2260%22%20y%3D%22120%22%20width%3D%22110%22%20height%3D%22130%22%20fill%3D%22%23b09e95%22%2F%3E%3Crect%20x%3D%22270%22%20y%3D%22150%22%20width%3D%2280%22%20height%3D%22100%22%20fill%3D%22%23b09e95%22%2F%3E%3Crect%20x%3D%22160%22%20y%3D%2280%22%20width%3D%22120%22%20height%3D%22170%22%20fill%3D%22%23c2b2ab%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%22248%22%20width%3D%22400%22%20height%3D%2252%22%20fill%3D%22%23d6cbc4%22%2F%3E%3C%2Fsvg%3E', built: 2018, type: 'Stabilized', broker: 'CBRE Phoenix', seller: 'Brookline Living', whisper: 117000000, whisperRSF: 410, whisperSF: 276, siteSF: 423000, rentableSF: 285000, avgSF: 920, parking: 1.55, irr: 15.20, cap: 4.85, yoc: 5.40, em: 2.10 },
+  { id: 'spire-deer-valley', stage: 'am', name: 'North Spire', addr: 'Phoenix, AZ', market: 'Phoenix', units: 388, price: 131100000, ppu: 337887, owner: 'don', stageLabel: 'Closed Jan 2025', lat: 33.6890, lng: -112.1024, img: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e7e4dc%22%2F%3E%3Crect%20x%3D%2260%22%20y%3D%22120%22%20width%3D%22110%22%20height%3D%22130%22%20fill%3D%22%23a99e84%22%2F%3E%3Crect%20x%3D%22270%22%20y%3D%22150%22%20width%3D%2280%22%20height%3D%22100%22%20fill%3D%22%23a99e84%22%2F%3E%3Crect%20x%3D%22160%22%20y%3D%2280%22%20width%3D%22120%22%20height%3D%22170%22%20fill%3D%22%23bdb39c%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%22248%22%20width%3D%22400%22%20height%3D%2252%22%20fill%3D%22%23d4cdbd%22%2F%3E%3C%2Fsvg%3E', built: 2017, type: 'Stabilized', broker: 'JLL Phoenix', seller: 'Summit Living Partners', whisper: 131100000, whisperRSF: 380, whisperSF: 240, siteSF: 546000, rentableSF: 345000, avgSF: 889, parking: 1.62, irr: 14.40, cap: 4.95, yoc: 5.20, em: 1.95 },
+  { id: 'annex-cadence', stage: 'am', name: 'Mesa Annex', addr: 'Mesa, AZ', market: 'Phoenix', units: 135, price: 49000000, ppu: 362963, owner: 'don', stageLabel: 'Closed Aug 2025', lat: 33.3520, lng: -111.6852, img: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e9e3d6%22%2F%3E%3Crect%20x%3D%2260%22%20y%3D%22120%22%20width%3D%22110%22%20height%3D%22130%22%20fill%3D%22%23baa784%22%2F%3E%3Crect%20x%3D%22270%22%20y%3D%22150%22%20width%3D%2280%22%20height%3D%22100%22%20fill%3D%22%23baa784%22%2F%3E%3Crect%20x%3D%22160%22%20y%3D%2280%22%20width%3D%22120%22%20height%3D%22170%22%20fill%3D%22%23c9b89a%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%22248%22%20width%3D%22400%22%20height%3D%2252%22%20fill%3D%22%23d8cdb8%22%2F%3E%3C%2Fsvg%3E', built: 2020, type: 'Stabilized', broker: 'Berkadia', seller: 'Redstone Communities', whisper: 49000000, whisperRSF: 395, whisperSF: 215, siteSF: 228000, rentableSF: 124200, avgSF: 920, parking: 1.50, irr: 13.80, cap: 4.65, yoc: 5.05, em: 1.82 },
+  { id: '8th-republican', stage: 'am', name: 'Uptown Lofts', addr: 'Seattle, WA', market: 'Seattle', units: 211, price: 94850000, ppu: 449526, owner: 'eric', stageLabel: 'Closed Sep 2025', lat: 47.6230, lng: -122.3438, img: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e6e7e0%22%2F%3E%3Crect%20x%3D%2260%22%20y%3D%22120%22%20width%3D%22110%22%20height%3D%22130%22%20fill%3D%22%23a7af9c%22%2F%3E%3Crect%20x%3D%22270%22%20y%3D%22150%22%20width%3D%2280%22%20height%3D%22100%22%20fill%3D%22%23a7af9c%22%2F%3E%3Crect%20x%3D%22160%22%20y%3D%2280%22%20width%3D%22120%22%20height%3D%22170%22%20fill%3D%22%23b9bfb0%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%235d6b52%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%22248%22%20width%3D%22400%22%20height%3D%2252%22%20fill%3D%22%23d3d6cc%22%2F%3E%3C%2Fsvg%3E', built: 2019, type: 'Stabilized', broker: 'Kidder Mathews', seller: 'Whitfield Partners', whisper: 94850000, whisperRSF: 462, whisperSF: 298, siteSF: 152000, rentableSF: 205400, avgSF: 974, parking: 1.18, irr: 12.95, cap: 4.32, yoc: 5.05, em: 1.78 },
+  { id: 'scottsdale-on-main', stage: 'am', name: 'Main Street Flats', addr: 'Scottsdale, AZ', market: 'Scottsdale', units: 119, price: 66100000, ppu: 555462, owner: 'don', stageLabel: 'Closed Oct 2025', lat: 33.4943, lng: -111.9226, img: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e8e2dd%22%2F%3E%3Crect%20x%3D%2260%22%20y%3D%22120%22%20width%3D%22110%22%20height%3D%22130%22%20fill%3D%22%23b09e95%22%2F%3E%3Crect%20x%3D%22270%22%20y%3D%22150%22%20width%3D%2280%22%20height%3D%22100%22%20fill%3D%22%23b09e95%22%2F%3E%3Crect%20x%3D%22160%22%20y%3D%2280%22%20width%3D%22120%22%20height%3D%22170%22%20fill%3D%22%23c2b2ab%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%22248%22%20width%3D%22400%22%20height%3D%2252%22%20fill%3D%22%23d6cbc4%22%2F%3E%3C%2Fsvg%3E', built: 2021, type: 'Stabilized', broker: 'Marcus & Millichap', seller: 'Vantage Group', whisper: 66100000, whisperRSF: 532, whisperSF: 388, siteSF: 98000, rentableSF: 124300, avgSF: 1044, parking: 1.40, irr: 14.10, cap: 4.05, yoc: 4.85, em: 1.92 },
+  { id: 'the-pines', stage: 'am', name: 'The Pines', addr: 'Henderson, NV', market: 'Las Vegas', units: 108, price: 25300000, ppu: 234259, owner: 'don', stageLabel: 'Closed Nov 2025', lat: 36.0395, lng: -114.9817, img: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e7e4dc%22%2F%3E%3Crect%20x%3D%2260%22%20y%3D%22120%22%20width%3D%22110%22%20height%3D%22130%22%20fill%3D%22%23a99e84%22%2F%3E%3Crect%20x%3D%22270%22%20y%3D%22150%22%20width%3D%2280%22%20height%3D%22100%22%20fill%3D%22%23a99e84%22%2F%3E%3Crect%20x%3D%22160%22%20y%3D%2280%22%20width%3D%22120%22%20height%3D%22170%22%20fill%3D%22%23bdb39c%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%236b5836%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%236b5836%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%22248%22%20width%3D%22400%22%20height%3D%2252%22%20fill%3D%22%23d4cdbd%22%2F%3E%3C%2Fsvg%3E', built: 2015, type: 'Stabilized', broker: 'NorthMarq', seller: 'Crossbridge Trust', whisper: 25300000, whisperRSF: 285, whisperSF: 168, siteSF: 142000, rentableSF: 88800, avgSF: 822, parking: 1.85, irr: 13.20, cap: 5.15, yoc: 5.65, em: 1.74 },
+  { id: 'cascade-ridge', stage: 'am', name: 'Cascade Ridge', addr: 'Renton, WA', market: 'Seattle', units: 270, price: 79500000, ppu: 294444, owner: 'eric', stageLabel: 'Closed Nov 2025', lat: 47.4730, lng: -122.1841, img: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e9e3d6%22%2F%3E%3Crect%20x%3D%2260%22%20y%3D%22120%22%20width%3D%22110%22%20height%3D%22130%22%20fill%3D%22%23baa784%22%2F%3E%3Crect%20x%3D%22270%22%20y%3D%22150%22%20width%3D%2280%22%20height%3D%22100%22%20fill%3D%22%23baa784%22%2F%3E%3Crect%20x%3D%22160%22%20y%3D%2280%22%20width%3D%22120%22%20height%3D%22170%22%20fill%3D%22%23c9b89a%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%2295%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22117%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22139%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22161%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22183%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22205%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22175%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22197%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22219%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22241%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%22263%22%20y%3D%22227%22%20width%3D%2212%22%20height%3D%2213%22%20fill%3D%22%238a6020%22%20opacity%3D%220.55%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22135%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22157%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22179%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22201%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%2297%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22119%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%22141%22%20y%3D%22223%22%20width%3D%2211%22%20height%3D%2212%22%20fill%3D%22%238a6020%22%20opacity%3D%220.4%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%22248%22%20width%3D%22400%22%20height%3D%2252%22%20fill%3D%22%23d8cdb8%22%2F%3E%3C%2Fsvg%3E', built: 2018, type: 'Stabilized', broker: 'CBRE Seattle', seller: 'Parkway Living', whisper: 79500000, whisperRSF: 322, whisperSF: 198, siteSF: 380000, rentableSF: 246780, avgSF: 914, parking: 1.55, irr: 13.55, cap: 4.55, yoc: 5.12, em: 1.81 },
+];
+
+const stageLabels = {
+  source: { name: 'Sourcing', cls: 'source' },
+  screen: { name: 'Screening', cls: 'screen' },
+  uw:     { name: 'Underwriting', cls: 'uw' },
+  ic:     { name: 'IC Review', cls: 'ic' },
+  close:  { name: 'Closing', cls: 'close' },
+  am:     { name: 'Asset Mgmt', cls: 'am' },
+};
+const stageColors = {
+  source: '#6B4423', screen: '#134E4A', uw: '#92400E',
+  ic: '#1E3A5F', close: '#166534', am: '#6B21A8',
+};
+
+const fmtMoney = n => {
+  if (!n && n !== 0) return '—';
+  if (n >= 1e9) return '$' + (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return '$' + (n/1e3).toFixed(0) + 'K';
+  return '$' + n;
+};
+const fmtMoneyFull = n => n ? '$' + n.toLocaleString() : '—';
+const fmtPPU = n => '$' + Math.round(n/1000) + 'K';
+const fmtPct = n => n != null ? n.toFixed(2) + '%' : '—';
+const fmtNum = n => n != null ? n.toLocaleString() : '—';
+
+// ============== PIPELINE COLUMNS ==============
+function renderPipeline() {
+  ['source','screen','uw','ic','close','am'].forEach(stage => {
+    const col = document.getElementById('col-' + stage);
+    const stageDeals = deals.filter(d => d.stage === stage);
+    document.getElementById('cnt-' + stage).textContent = stageDeals.length;
+    if (stageDeals.length === 0) {
+      col.innerHTML = `<div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted-soft); padding:24px 6px; text-align:center; line-height:1.6; opacity:0.6;">No deals<br>at this stage</div>`;
+      return;
+    }
+    col.innerHTML = stageDeals.slice(0, 4).map(d => `
+      <div class="deal-card" onclick="openDeal('${d.id}')">
+        <div class="deal-card-name">${d.name}</div>
+        <div class="deal-card-meta">${d.market} · ${d.units} units</div>
+        <div class="deal-card-tag">${d.stageLabel}</div>
+      </div>
+    `).join('') + (stageDeals.length > 4 ? `<div style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); padding:6px 4px; text-align:center;">+ ${stageDeals.length - 4} more</div>` : '');
+  });
+}
+
+// ============== DEAL TABLE ==============
+function renderTable(filter = 'all') {
+  let list = deals;
+  if (filter === 'active') list = deals.filter(d => d.stage !== 'am');
+  else if (filter === 'am') list = deals.filter(d => d.stage === 'am');
+  else if (filter === 'phx') list = deals.filter(d => ['Phoenix','Scottsdale','Tucson'].includes(d.market));
+  else if (filter === 'sea') list = deals.filter(d => d.market === 'Seattle');
+  else if (filter === 'lv') list = deals.filter(d => d.market === 'Las Vegas');
+
+  document.getElementById('pipelineCount').textContent = list.length + ' deals';
+
+  document.getElementById('dealTable').innerHTML = list.map(d => {
+    return `
+      <div class="deal-row" onclick="openDeal('${d.id}')">
+        <div>
+          <span class="deal-name">${d.name}</span>
+          <span class="deal-address">${d.addr}</span>
+        </div>
+        <div class="col-stage"><span class="stage-pill ${stageLabels[d.stage].cls}">${stageLabels[d.stage].name}</span></div>
+        <div class="num">${fmtMoney(d.price)}</div>
+        <div class="num col-units">${d.units}</div>
+        <div class="num col-ppu">${fmtPPU(d.ppu)}</div>
+        <div class="num col-cap">${fmtPct(d.cap)}</div>
+        <div class="col-arrow">→</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============== MAP ==============
+let map, markers = [], activeStages = new Set(['source','screen','uw','ic','close','am']);
+
+function initMap() {
+  // Build the map. Default to Leaflet+CartoDB. If GOOGLE_MAPS_KEY is set, swap.
+  // Using CartoDB Voyager — premium tile style used by major real estate platforms.
+  map = L.map('leafletMap', {
+    center: [38.5, -114.5],
+    zoom: 5,
+    zoomControl: true,
+    scrollWheelZoom: false,
+    attributionControl: true,
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap · © CARTO',
+    subdomains: 'abcd',
+    maxZoom: 19,
+  }).addTo(map);
+
+  renderMarkers();
+}
+
+function renderMarkers() {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
+  const visible = deals.filter(d => activeStages.has(d.stage) && d.lat && d.lng);
+  visible.forEach(d => {
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="map-marker" style="background:${stageColors[d.stage]}"></div>`,
+      iconSize: [22, 22],
+      iconAnchor: [11, 11],
+    });
+    const ownerName = d.owner === 'jack' ? 'Tyler' : d.owner === 'eric' ? 'Sam' : 'Marcus';
+    const marker = L.marker([d.lat, d.lng], { icon })
+      .bindPopup(`
+        <div class="map-popup">
+          <div class="map-popup-eyebrow">${stageLabels[d.stage].name} · ${d.market}</div>
+          <div class="map-popup-title">${d.name}</div>
+          <div class="map-popup-meta">
+            <strong>${fmtMoney(d.price)}</strong> · ${d.units} units · ${fmtPPU(d.ppu)}/u<br>
+            ${d.cap ? '<strong>Cap</strong> ' + fmtPct(d.cap) + ' · ' : ''}${d.irr ? '<strong>IRR</strong> ' + fmtPct(d.irr) : ''}<br>
+          </div>
+          <span class="map-popup-cta" onclick="openDeal('${d.id}')">Open deal →</span>
+        </div>
+      `, { maxWidth: 260 });
+    marker.addTo(map);
+    markers.push(marker);
+  });
+
+  if (visible.length > 0) {
+    const bounds = L.latLngBounds(visible.map(d => [d.lat, d.lng]));
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 9 });
+  }
+}
+
+// Legend filter
+document.getElementById('mapLegend').addEventListener('click', e => {
+  const item = e.target.closest('.map-legend-item');
+  if (!item) return;
+  const stage = item.dataset.stage;
+  if (activeStages.has(stage)) {
+    activeStages.delete(stage);
+    item.classList.add('dimmed');
+  } else {
+    activeStages.add(stage);
+    item.classList.remove('dimmed');
+  }
+  renderMarkers();
+});
+
+// ============== TAB SWITCHER ==============
+document.querySelectorAll('.pipeline-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pipeline-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTable(btn.dataset.tab);
+  });
+});
+
+// ============== DEAL DETAIL MODAL ==============
+
+// AI dig content per market
+function aiDig(deal) {
+  const facts = {
+    'Phoenix': [
+      '<strong>Submarket:</strong> North Phoenix submarket. 3.8% vacancy (Q4 2025), 320bps tighter than metro avg.',
+      '<strong>Rent comps:</strong> 4 stabilized comps within 0.5mi avg $2,180/unit. Subject in-place at $1,948 — 11% below market.',
+      '<strong>Neighboring parcels:</strong> An institutional investor owns the adjacent 4-acre site, zoned for 180 add\'l units. Potential covenant risk on FAR.',
+      '<strong>New supply:</strong> 1,200 units delivering within 1mi over next 18 months. Lease-up risk concentrated Q3 2026.',
+      '<strong>Demographics:</strong> Median HH income $98K within 1mi · 14% growth since 2020. Renter-by-choice profile.',
+      '<strong>Property tax:</strong> Maricopa County reassessment cycle in 2026 — model 8-12% bump.',
+      '<strong>Walkability:</strong> Walk Score 78 · 12 min to a nearby regional town center.',
+    ],
+    'Scottsdale': [
+      '<strong>Submarket:</strong> North Scottsdale. 4.1% vacancy, premium A-class market.',
+      '<strong>Rent comps:</strong> 5 comps within 1mi avg $2,650/unit. Subject in-place at $2,420.',
+      '<strong>Neighboring parcels:</strong> A major retail center nearby. Top-quartile walkability for submarket.',
+      '<strong>New supply:</strong> Limited deliveries (380 units) over next 24 months. Constrained by zoning.',
+      '<strong>Demographics:</strong> Median HH income $142K within 1mi. Strongest renter income profile in MSA.',
+      '<strong>School ratings:</strong> Scottsdale USD 9/10 · supports family renter pool.',
+    ],
+    'Seattle': [
+      '<strong>Submarket:</strong> South Lake Union / Bellevue tech corridor. 4.6% vacancy.',
+      '<strong>Rent comps:</strong> 6 comps within 0.75mi avg $3,420/unit. Strong rebound off 2023 lows.',
+      '<strong>Neighboring parcels:</strong> Amazon HQ within 0.4mi · Microsoft commute corridor 12 min.',
+      '<strong>New supply:</strong> 2,400 units in pipeline citywide but Bellevue submarket constrained.',
+      '<strong>Demographics:</strong> Median HH income $128K within 1mi · 22% Amazon/MSFT employees in renter pool.',
+      '<strong>Light rail:</strong> Bellevue station 0.2mi · East Link extension Q4 2026.',
+    ],
+    'Tucson': [
+      '<strong>Submarket:</strong> Catalina Foothills. 5.2% vacancy, secondary growth market.',
+      '<strong>Rent comps:</strong> 3 comps within 1mi avg $1,720/unit. Subject in-place at $1,580.',
+      '<strong>Neighboring parcels:</strong> University of Arizona within 3mi · grad/young professional renter base.',
+      '<strong>Demographics:</strong> Median HH income $74K · steady population growth, value-buyer market.',
+      '<strong>Employment base:</strong> Raytheon, U of Arizona, Banner Health — diversified.',
+    ],
+    'Las Vegas': [
+      '<strong>Submarket:</strong> Henderson / Green Valley. 5.8% vacancy.',
+      '<strong>Rent comps:</strong> 4 comps within 1mi avg $1,650/unit.',
+      '<strong>Neighboring parcels:</strong> Master-planned community. Schools rated 8/10.',
+      '<strong>Demographics:</strong> Median HH income $86K · strong in-migration from CA.',
+    ],
+    'Denver': [
+      '<strong>Submarket:</strong> Cherry Creek. 4.3% vacancy, top-tier amenity submarket.',
+      '<strong>Rent comps:</strong> 5 comps within 1mi avg $2,890/unit.',
+      '<strong>Neighboring parcels:</strong> Cherry Creek shopping district within 0.3mi.',
+      '<strong>Demographics:</strong> Median HH income $135K within 1mi.',
+    ]
+  };
+  return (facts[deal.market] || facts['Phoenix']).map(f => `<div class="ai-fact">${f}</div>`).join('');
+}
+
+// Demographics block
+function demographics(deal) {
+  const base = {
+    'Phoenix':   { pop1: '12,840', pop3: '94,200', pop5: '218,400', inc1: '$98,420', inc3: '$84,200', inc5: '$76,800', age1: '34.2', growth: '+14.2%' },
+    'Scottsdale':{ pop1: '8,920', pop3: '68,400', pop5: '142,200', inc1: '$142,800', inc3: '$118,200', inc5: '$98,400', age1: '38.5', growth: '+9.8%' },
+    'Seattle':   { pop1: '24,600', pop3: '184,200', pop5: '385,400', inc1: '$128,400', inc3: '$112,800', inc5: '$98,200', age1: '32.8', growth: '+11.4%' },
+    'Tucson':    { pop1: '14,200', pop3: '82,400', pop5: '186,200', inc1: '$74,200', inc3: '$68,400', inc5: '$62,800', age1: '36.8', growth: '+6.2%' },
+    'Las Vegas': { pop1: '9,800', pop3: '78,400', pop5: '212,400', inc1: '$86,400', inc3: '$74,200', inc5: '$68,800', age1: '37.2', growth: '+12.8%' },
+    'Denver':    { pop1: '18,400', pop3: '142,800', pop5: '298,400', inc1: '$135,200', inc3: '$118,400', inc5: '$98,800', age1: '33.4', growth: '+10.6%' },
+  };
+  const d = base[deal.market] || base['Phoenix'];
+  return `
+    <div class="demo-grid">
+      <div class="demo-col">
+        <div class="demo-col-head">1-Mile Radius</div>
+        <div class="demo-row"><span>Population</span><span>${d.pop1}</span></div>
+        <div class="demo-row"><span>Median HH Income</span><span>${d.inc1}</span></div>
+        <div class="demo-row"><span>Median Age</span><span>${d.age1}</span></div>
+        <div class="demo-row"><span>Pop Growth (5yr)</span><span>${d.growth}</span></div>
+        <div class="demo-row"><span>Renter %</span><span>52.4%</span></div>
+      </div>
+      <div class="demo-col">
+        <div class="demo-col-head">3-Mile Radius</div>
+        <div class="demo-row"><span>Population</span><span>${d.pop3}</span></div>
+        <div class="demo-row"><span>Median HH Income</span><span>${d.inc3}</span></div>
+        <div class="demo-row"><span>Median Age</span><span>35.1</span></div>
+        <div class="demo-row"><span>HH with Kids</span><span>28.2%</span></div>
+        <div class="demo-row"><span>Bachelor's+</span><span>48.8%</span></div>
+      </div>
+      <div class="demo-col">
+        <div class="demo-col-head">5-Mile Radius</div>
+        <div class="demo-row"><span>Population</span><span>${d.pop5}</span></div>
+        <div class="demo-row"><span>Median HH Income</span><span>${d.inc5}</span></div>
+        <div class="demo-row"><span>Daytime Pop</span><span>+18.4%</span></div>
+        <div class="demo-row"><span>Job Growth (3yr)</span><span>+8.2%</span></div>
+        <div class="demo-row"><span>Vacancy Rate</span><span>4.1%</span></div>
+      </div>
+    </div>
+  `;
+}
+
+// Rent vs mortgage
+function rentVsMortgage(deal) {
+  const avgRent = deal.market === 'Seattle' ? 3420 : deal.market === 'Scottsdale' ? 2650 : deal.market === 'Phoenix' ? 2180 : deal.market === 'Tucson' ? 1720 : deal.market === 'Denver' ? 2890 : 1650;
+  const medianHomePrice = deal.market === 'Seattle' ? 825000 : deal.market === 'Scottsdale' ? 765000 : deal.market === 'Phoenix' ? 485000 : deal.market === 'Tucson' ? 365000 : deal.market === 'Denver' ? 685000 : 425000;
+  const mortgagePI = Math.round((medianHomePrice * 0.8 * (0.0675/12)) / (1 - Math.pow(1 + 0.0675/12, -360)));
+  const mortgageTotal = mortgagePI + Math.round(medianHomePrice * 0.012 / 12) + Math.round(medianHomePrice * 0.005 / 12);
+  const gap = mortgageTotal - avgRent;
+  const gapPct = ((gap/avgRent) * 100).toFixed(0);
+
+  return `
+    <div class="rent-mort-grid">
+      <div class="rm-stat">
+        <div class="rm-stat-label">Avg Submarket Rent</div>
+        <div class="rm-stat-value">$${avgRent.toLocaleString()}</div>
+        <div class="rm-stat-meta">2BR · stabilized · Zillow + Redfin</div>
+      </div>
+      <div class="rm-stat">
+        <div class="rm-stat-label">Owning a Comp Home</div>
+        <div class="rm-stat-value">$${mortgageTotal.toLocaleString()}</div>
+        <div class="rm-stat-meta">Median $${(medianHomePrice/1000).toFixed(0)}K · 20% down · 6.75% · PITI</div>
+      </div>
+    </div>
+    <div class="rm-takeaway">
+      <strong>Renting is ${gap > 0 ? `$${Math.abs(gap).toLocaleString()}/mo cheaper (${gapPct}%)` : `$${Math.abs(gap).toLocaleString()}/mo more expensive`}</strong> than owning a comparable home in this submarket. ${gap > 500 ? 'Strong tailwind for sustained renter demand and rent growth.' : gap > 0 ? 'Modest rent-vs-buy advantage — supports stable occupancy.' : 'Rent premium — monitor turnover risk.'}
+    </div>
+  `;
+}
+
+// 4-phase DD checklist
+function generateChecklist(deal) {
+  const sAfter = list => list.includes(deal.stage);
+  return [
+    {
+      name: 'Phase 1 — Sourcing & Screening',
+      items: [
+        { txt: 'OM ingested from broker', done: true, meta: 'Oct 28' },
+        { txt: 'Initial screening — Marcus', done: true, meta: 'Oct 30' },
+        { txt: 'Preliminary model run — Tyler', done: sAfter(['uw','ic','close','am']), meta: 'Oct 31' },
+        { txt: 'Tour completed', done: sAfter(['uw','ic','close','am']), meta: 'Nov 3' },
+      ]
+    },
+    {
+      name: 'Phase 2 — Underwriting',
+      items: [
+        { txt: 'Full UW model built & stress-tested', done: sAfter(['ic','close','am']), inProgress: deal.stage === 'uw', meta: deal.stage === 'uw' ? 'In progress' : 'Nov 10' },
+        { txt: 'Rent comp set assembled', done: sAfter(['ic','close','am']), inProgress: deal.stage === 'uw', meta: deal.stage === 'uw' ? 'Tyler' : 'Nov 8' },
+        { txt: 'Sale comp set assembled', done: sAfter(['ic','close','am']), inProgress: deal.stage === 'uw', meta: deal.stage === 'uw' ? 'Tyler' : 'Nov 8' },
+        { txt: 'Debt quotes received — Sam', done: sAfter(['ic','close','am']), inProgress: deal.stage === 'uw', meta: deal.stage === 'uw' ? 'Sam' : 'Nov 11' },
+        { txt: 'Investment memo drafted', done: sAfter(['ic','close','am']), inProgress: deal.stage === 'uw', meta: deal.stage === 'uw' ? 'Pending' : 'Nov 12' },
+      ]
+    },
+    {
+      name: 'Phase 3 — IC & LOI',
+      items: [
+        { txt: 'IC vote', done: sAfter(['close','am']), inProgress: deal.stage === 'ic', meta: deal.stage === 'ic' ? 'Vote Thurs' : 'Nov 14' },
+        { txt: 'LOI submitted', done: sAfter(['close','am']), meta: sAfter(['close','am']) ? 'Nov 15' : 'Pending' },
+        { txt: 'Best & Final round', done: sAfter(['close','am']), meta: sAfter(['close','am']) ? 'Nov 18' : 'Pending' },
+        { txt: 'PSA executed', done: sAfter(['close','am']), meta: sAfter(['close','am']) ? 'Nov 22' : 'Pending' },
+      ]
+    },
+    {
+      name: 'Phase 4 — Due Diligence & Close',
+      items: [
+        { txt: 'Property condition assessment', done: deal.stage === 'am', inProgress: deal.stage === 'close', meta: deal.stage === 'close' ? 'In progress' : (deal.stage === 'am' ? 'Complete' : 'Pending') },
+        { txt: 'Phase I environmental', done: deal.stage === 'am', inProgress: deal.stage === 'close', meta: deal.stage === 'close' ? 'In progress' : (deal.stage === 'am' ? 'Complete' : 'Pending') },
+        { txt: 'Lease audit', done: deal.stage === 'am', inProgress: deal.stage === 'close', meta: deal.stage === 'close' ? 'In progress' : (deal.stage === 'am' ? 'Complete' : 'Pending') },
+        { txt: 'Title commitment cleared', done: deal.stage === 'am', inProgress: deal.stage === 'close', meta: deal.stage === 'close' ? 'In progress' : (deal.stage === 'am' ? 'Complete' : 'Pending') },
+        { txt: 'Final loan docs executed', done: deal.stage === 'am', meta: deal.stage === 'am' ? 'Complete' : 'Pending' },
+        { txt: 'Closing & funding', done: deal.stage === 'am', meta: deal.stage === 'am' ? 'Complete' : (deal.stage === 'close' ? 'Scheduled 12/18' : 'Pending') },
+      ]
+    }
+  ];
+}
+
+// ============== TAB CONTENT BUILDERS ==============
+
+function buildSummaryTab(deal) {
+  const equityReq = deal.equityReq || Math.round(deal.price * 0.37);
+  const loanFunding = deal.price - equityReq;
+  const loanFee = Math.round(deal.price * 0.013);
+  const miscSoft = Math.round(deal.units * 400);
+  const leaseUp = Math.round(deal.units * 700);
+  const totalAcqCost = deal.price + loanFee + miscSoft + leaseUp;
+
+  return `
+    <!-- Property hero -->
+    <div class="property-hero">
+      <div class="property-image">
+        <img src="${deal.img}" alt="${deal.name}" onerror="this.style.display='none'">
+        <div class="image-thumbs">
+          <div class="image-thumb active" style="background-image:url(${deal.img})"></div>
+          <div class="image-thumb" style="background-image:url(${deal.img})"></div>
+          <div class="image-thumb" style="background-image:url(${deal.img})"></div>
+          <div class="image-thumb" style="background:#ddd; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:9px;">+6</div>
+        </div>
+        <div class="property-image-overlay">
+          <span>${deal.addr}</span>
+          <span>${deal.broker.split('·')[0].trim()}</span>
+        </div>
+      </div>
+      <div class="ai-dig">
+        <div class="ai-dig-head">
+          <span class="ai-badge">CLAUDE</span>
+          <span class="ai-dig-title">Site &amp; Submarket Intelligence</span>
+        </div>
+        ${aiDig(deal)}
+      </div>
+    </div>
+
+    <!-- Main Info + Pricing -->
+    <div class="grid-2">
+      <div class="modal-section">
+        <div class="modal-section-title">Main Info <span class="sub">Property specs</span></div>
+        <div class="spec-list">
+          <div class="spec-row"><span class="spec-label">Address</span><span class="spec-value">${deal.addr.split('·')[0].trim()}</span></div>
+          <div class="spec-row"><span class="spec-label">Deal Type</span><span class="spec-value">${deal.type}</span></div>
+          <div class="spec-row"><span class="spec-label">Deal Status</span><span class="spec-value">${stageLabels[deal.stage].name}</span></div>
+          <div class="spec-row"><span class="spec-label">Market</span><span class="spec-value">${deal.market}</span></div>
+          <div class="spec-row"><span class="spec-label">Units</span><span class="spec-value">${deal.units}</span></div>
+          <div class="spec-row"><span class="spec-label">Year Built</span><span class="spec-value">${deal.built}</span></div>
+          <div class="spec-row"><span class="spec-label">Site SF</span><span class="spec-value">${fmtNum(deal.siteSF)}</span></div>
+          <div class="spec-row"><span class="spec-label">Rentable SF</span><span class="spec-value">${fmtNum(deal.rentableSF)}</span></div>
+          <div class="spec-row"><span class="spec-label">Average SF</span><span class="spec-value">${deal.avgSF}</span></div>
+          <div class="spec-row"><span class="spec-label">Whisper / Rentable SF</span><span class="spec-value">$${deal.whisperRSF}</span></div>
+          <div class="spec-row"><span class="spec-label">Whisper / Site SF</span><span class="spec-value">$${deal.whisperSF}</span></div>
+          <div class="spec-row"><span class="spec-label">Parking Ratio</span><span class="spec-value">${deal.parking}</span></div>
+          <div class="spec-row"><span class="spec-label">Seller</span><span class="spec-value">${deal.seller}</span></div>
+          <div class="spec-row"><span class="spec-label">Equity Partner</span><span class="spec-value">${deal.equityPartner || 'Manual'}</span></div>
+          <div class="spec-row"><span class="spec-label">Lender</span><span class="spec-value">${deal.lender || 'Manual'}</span></div>
+          <div class="spec-row"><span class="spec-label">Call for Offer</span><span class="spec-value">${deal.cfo || '—'}</span></div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Pricing <span class="sub">Underwritten metrics</span></div>
+        <table class="data-table">
+          <thead><tr><th></th><th class="num">Total</th><th class="num">$ / Unit</th></tr></thead>
+          <tbody>
+            <tr><td>Whisper Price</td><td class="num">${fmtMoneyFull(deal.whisper)}</td><td class="num">${fmtPPU(Math.round(deal.whisper/deal.units))}</td></tr>
+            <tr><td>Acquisition Price</td><td class="num">${fmtMoneyFull(deal.price)}</td><td class="num">${fmtPPU(deal.ppu)}</td></tr>
+            <tr><td>In-Place Cap</td><td class="num">${fmtPct(deal.cap)}</td><td class="num">—</td></tr>
+            <tr><td>Return on Cost</td><td class="num">${fmtPct(deal.roc)}</td><td class="num">—</td></tr>
+            <tr><td>Year 1 Stabilized CoC</td><td class="num">${fmtPct(deal.cashOnCash)}</td><td class="num">—</td></tr>
+            <tr><td>Equity Required</td><td class="num">${fmtMoneyFull(equityReq)}</td><td class="num">${fmtPPU(Math.round(equityReq/deal.units))}</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:14px;">
+          <div class="modal-section-title" style="font-size:14px; margin-bottom:8px;">Returns <span class="sub">By stakeholder</span></div>
+          <table class="data-table">
+            <thead><tr><th></th><th class="num">Project</th><th class="num">Acme</th><th class="num">JV Partner</th></tr></thead>
+            <tbody>
+              <tr><td>Equity Split</td><td class="num">—</td><td class="num">10.0%</td><td class="num">90.0%</td></tr>
+              <tr><td>IRR</td><td class="num">${fmtPct(deal.irr)}</td><td class="num">${deal.irr ? fmtPct(deal.irr * 1.71) : '—'}</td><td class="num">${deal.irr ? fmtPct(deal.irr * 0.90) : '—'}</td></tr>
+              <tr><td>Equity Multiple</td><td class="num">${deal.em ? deal.em.toFixed(2) + 'x' : '—'}</td><td class="num">${deal.em ? (deal.em * 1.62).toFixed(2) + 'x' : '—'}</td><td class="num">${deal.em ? (deal.em * 0.94).toFixed(2) + 'x' : '—'}</td></tr>
+              <tr><td>Profit ($)</td><td class="num">${deal.em ? fmtMoney(equityReq * (deal.em - 1)) : '—'}</td><td class="num">${deal.em ? fmtMoney(equityReq * (deal.em - 1) * 0.218) : '—'}</td><td class="num">${deal.em ? fmtMoney(equityReq * (deal.em - 1) * 0.782) : '—'}</td></tr>
+              <tr><td>Profit (%)</td><td class="num">100.0%</td><td class="num">21.8%</td><td class="num">78.2%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sources / Uses -->
+    <div class="grid-2">
+      <div class="modal-section">
+        <div class="modal-section-title">Sources of Capital</div>
+        <table class="data-table">
+          <thead><tr><th></th><th class="num">Total</th><th class="num">%</th></tr></thead>
+          <tbody>
+            <tr><td>Loan Funding</td><td class="num">${fmtMoneyFull(loanFunding)}</td><td class="num">${((loanFunding/deal.price)*100).toFixed(0)}%</td></tr>
+            <tr><td>Equity</td><td class="num">${fmtMoneyFull(equityReq)}</td><td class="num">${((equityReq/deal.price)*100).toFixed(0)}%</td></tr>
+            <tr class="total"><td>Total</td><td class="num">${fmtMoneyFull(deal.price)}</td><td class="num">100%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Uses of Capital</div>
+        <table class="data-table">
+          <thead><tr><th></th><th class="num">Total</th><th class="num">$ / Unit</th></tr></thead>
+          <tbody>
+            <tr><td>Acquisition Price</td><td class="num">${fmtMoneyFull(deal.price)}</td><td class="num">${fmtPPU(deal.ppu)}</td></tr>
+            <tr><td>Loan Fee / Closing</td><td class="num">${fmtMoneyFull(loanFee)}</td><td class="num">$${Math.round(loanFee/deal.units/100)*100/1000}K</td></tr>
+            <tr><td>Misc Soft Costs / Ops</td><td class="num">${fmtMoneyFull(miscSoft)}</td><td class="num">$400/u</td></tr>
+            <tr><td>Lease-up Costs</td><td class="num">${fmtMoneyFull(leaseUp)}</td><td class="num">$700/u</td></tr>
+            <tr class="total"><td>Total Acquisition Cost</td><td class="num">${fmtMoneyFull(totalAcqCost)}</td><td class="num">${fmtPPU(Math.round(totalAcqCost/deal.units))}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Financing -->
+    <div class="modal-section">
+      <div class="modal-section-title">Financing <span class="sub">Debt structure</span></div>
+      <div class="grid-3">
+        <div class="spec-list">
+          <div class="spec-row"><span class="spec-label">Underwriting Balance</span><span class="spec-value">${fmtMoneyFull(loanFunding)}</span></div>
+          <div class="spec-row"><span class="spec-label">Rate</span><span class="spec-value">5.00%</span></div>
+        </div>
+        <div class="spec-list">
+          <div class="spec-row"><span class="spec-label">LTV</span><span class="spec-value">65%</span></div>
+          <div class="spec-row"><span class="spec-label">Loan Term</span><span class="spec-value">5 yrs</span></div>
+        </div>
+        <div class="spec-list">
+          <div class="spec-row"><span class="spec-label">Amortization</span><span class="spec-value">I/O</span></div>
+          <div class="spec-row"><span class="spec-label">Lender</span><span class="spec-value" style="font-size:11px;">${deal.lender || 'TBD'}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sensitivity / Rent vs Mortgage -->
+    <div class="grid-2">
+      <div class="modal-section">
+        <div class="modal-section-title">Sensitivity Analysis <span class="sub">Exit cap → IRR / EM</span></div>
+        ${deal.deepData ? `
+          <table class="data-table sensitivity-table">
+            <thead><tr><th>Exit Cap</th><th class="num">IRR</th><th class="num">Equity Multiple</th></tr></thead>
+            <tbody>
+              <tr><td>5.20%</td><td class="num">13.00%</td><td class="num">1.78x</td></tr>
+              <tr><td>5.05%</td><td class="num">14.24%</td><td class="num">1.88x</td></tr>
+              <tr><td>4.90%</td><td class="num">15.51%</td><td class="num">1.98x</td></tr>
+              <tr style="background:var(--accent-soft);"><td><strong>4.75%</strong></td><td class="num"><strong>${fmtPct(deal.irr)}</strong></td><td class="num"><strong>${deal.em.toFixed(2)}x</strong></td></tr>
+              <tr><td>4.60%</td><td class="num">18.10%</td><td class="num">2.21x</td></tr>
+              <tr><td>4.45%</td><td class="num">19.43%</td><td class="num">2.33x</td></tr>
+              <tr><td>4.30%</td><td class="num">20.79%</td><td class="num">2.47x</td></tr>
+              <tr><td>4.15%</td><td class="num">22.18%</td><td class="num">2.61x</td></tr>
+              <tr><td>4.00%</td><td class="num">23.61%</td><td class="num">2.76x</td></tr>
+            </tbody>
+          </table>
+        ` : '<div style="color:var(--muted); font-size:13px; padding:8px 0;">Sensitivity table populates once UW model is locked.</div>'}
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Rent vs Mortgage <span class="sub">Live · Redfin + Zillow</span></div>
+        ${rentVsMortgage(deal)}
+      </div>
+    </div>
+
+    <!-- Critical Dates / Deal Parties -->
+    <div class="grid-2">
+      <div class="modal-section">
+        <div class="modal-section-title">Critical Dates</div>
+        <div class="dates-grid">
+          <div class="date-row"><span class="date-label">Listed on Market</span><span class="date-value">${deal.listed || '—'}</span></div>
+          <div class="date-row"><span class="date-label">Call for Offers</span><span class="date-value warn">${deal.cfo || '—'}</span></div>
+          <div class="date-row"><span class="date-label">Best &amp; Final</span><span class="date-value">07/08/2026</span></div>
+          <div class="date-row"><span class="date-label">PSA Target</span><span class="date-value">07/22/2026</span></div>
+          <div class="date-row"><span class="date-label">DD Period Ends</span><span class="date-value">09/05/2026</span></div>
+          <div class="date-row"><span class="date-label">Funding</span><span class="date-value good">09/30/2026</span></div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Deal Parties</div>
+        <div class="spec-list">
+          <div class="spec-row"><span class="spec-label">Brokerage</span><span class="spec-value">${deal.broker.split('·')[0].trim()}</span></div>
+          <div class="spec-row"><span class="spec-label">Lead Broker</span><span class="spec-value">${deal.broker.split('·')[1] ? deal.broker.split('·')[1].trim() : '—'}</span></div>
+          <div class="spec-row"><span class="spec-label">Phone</span><span class="spec-value">${deal.brokerPhone || '—'}</span></div>
+          <div class="spec-row"><span class="spec-label">Email</span><span class="spec-value" style="font-size:11px;">${deal.brokerEmail || '—'}</span></div>
+          <div class="spec-row"><span class="spec-label">Seller</span><span class="spec-value">${deal.seller}</span></div>
+          <div class="spec-row"><span class="spec-label">Equity Partner</span><span class="spec-value">${deal.equityPartner || '—'}</span></div>
+          <div class="spec-row"><span class="spec-label">Lender</span><span class="spec-value">${deal.lender || '—'}</span></div>
+        </div>
+      </div>
+    </div>
+
+    ${deal.deepData ? `
+      <div class="modal-section" style="background: linear-gradient(135deg, #FAF8F3 0%, #F0EDE5 100%); border: 1px solid var(--line-strong);">
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span class="ai-badge" style="margin-top:2px;">CLAUDE FLAG</span>
+          <div style="font-size:13px; color:var(--ink-soft); line-height:1.55; flex:1;">
+            ${deal.altaRise
+              ? 'Alta Rise was just delivered (2025) — no operating history. UW assumes Year 1 lease-up at $2,180 weighted avg, but submarket added 1,200 units in trailing 12 months. Recommend stress-test Y1 occupancy at 87% (vs 92% UW).'
+              : 'Year 2 rent growth assumption of <strong>6.87%</strong> sits above 5-year Phoenix average of 4.2%. Single biggest IRR sensitivity in the model. Recommend Tyler stress-test at <strong>4.5%</strong> before IC.'}
+          </div>
+        </div>
+      </div>
+    ` : ''}
+  `;
+}
+
+function buildProformaTab(deal) {
+  // Unit mix
+  const studio = Math.round(deal.units * 0.19);
+  const oneOne = Math.round(deal.units * 0.22);
+  const loft = Math.round(deal.units * 0.12);
+  const twoTwo = deal.units - studio - oneOne - loft;
+  return `
+    <div class="modal-section">
+      <div class="modal-section-title">Unit Mix <span class="sub">In-place vs post-reno</span></div>
+      <table class="data-table">
+        <thead><tr><th>Type</th><th class="num">Units</th><th class="num">Avg SF</th><th class="num">In-place</th><th class="num">Post-reno</th><th class="num">Δ</th></tr></thead>
+        <tbody>
+          <tr><td>Studio</td><td class="num">${studio}</td><td class="num">644</td><td class="num">$1,651</td><td class="num">$1,925</td><td class="num">+16.6%</td></tr>
+          <tr><td>1×1</td><td class="num">${oneOne}</td><td class="num">682</td><td class="num">$1,759</td><td class="num">$2,150</td><td class="num">+22.2%</td></tr>
+          <tr><td>1×1 Loft</td><td class="num">${loft}</td><td class="num">716</td><td class="num">$1,888</td><td class="num">$2,450</td><td class="num">+29.8%</td></tr>
+          <tr><td>2×2</td><td class="num">${twoTwo}</td><td class="num">921</td><td class="num">$2,122</td><td class="num">$2,600</td><td class="num">+22.5%</td></tr>
+          <tr class="total"><td>Total</td><td class="num">${deal.units}</td><td class="num">${deal.avgSF}</td><td class="num">$1,948</td><td class="num">$2,377</td><td class="num">+22.0%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">5-Year Cash Flow Projection <span class="sub">Stabilized · $000s</span></div>
+      <table class="data-table">
+        <thead><tr><th>Line Item</th><th class="num">Y1</th><th class="num">Y2</th><th class="num">Y3</th><th class="num">Y4</th><th class="num">Y5</th></tr></thead>
+        <tbody>
+          <tr><td>Gross Rental Income</td><td class="num">${fmtMoney(deal.units * 23400)}</td><td class="num">${fmtMoney(deal.units * 24800)}</td><td class="num">${fmtMoney(deal.units * 26200)}</td><td class="num">${fmtMoney(deal.units * 27300)}</td><td class="num">${fmtMoney(deal.units * 28500)}</td></tr>
+          <tr><td>Vacancy / Concession</td><td class="num">(${fmtMoney(deal.units * 1900)})</td><td class="num">(${fmtMoney(deal.units * 1500)})</td><td class="num">(${fmtMoney(deal.units * 1320)})</td><td class="num">(${fmtMoney(deal.units * 1380)})</td><td class="num">(${fmtMoney(deal.units * 1440)})</td></tr>
+          <tr><td>Other Income</td><td class="num">${fmtMoney(deal.units * 1200)}</td><td class="num">${fmtMoney(deal.units * 1280)}</td><td class="num">${fmtMoney(deal.units * 1360)}</td><td class="num">${fmtMoney(deal.units * 1420)}</td><td class="num">${fmtMoney(deal.units * 1480)}</td></tr>
+          <tr style="background:var(--surface-2)"><td><strong>EGI</strong></td><td class="num"><strong>${fmtMoney(deal.units * 22700)}</strong></td><td class="num"><strong>${fmtMoney(deal.units * 24580)}</strong></td><td class="num"><strong>${fmtMoney(deal.units * 26240)}</strong></td><td class="num"><strong>${fmtMoney(deal.units * 27340)}</strong></td><td class="num"><strong>${fmtMoney(deal.units * 28540)}</strong></td></tr>
+          <tr><td>Operating Expenses</td><td class="num">(${fmtMoney(deal.units * 8200)})</td><td class="num">(${fmtMoney(deal.units * 8480)})</td><td class="num">(${fmtMoney(deal.units * 8770)})</td><td class="num">(${fmtMoney(deal.units * 9070)})</td><td class="num">(${fmtMoney(deal.units * 9380)})</td></tr>
+          <tr><td>Property Tax</td><td class="num">(${fmtMoney(deal.units * 2100)})</td><td class="num">(${fmtMoney(deal.units * 2350)})</td><td class="num">(${fmtMoney(deal.units * 2420)})</td><td class="num">(${fmtMoney(deal.units * 2490)})</td><td class="num">(${fmtMoney(deal.units * 2560)})</td></tr>
+          <tr class="total"><td>NOI</td><td class="num">${fmtMoney(deal.units * 12400)}</td><td class="num">${fmtMoney(deal.units * 13750)}</td><td class="num">${fmtMoney(deal.units * 15050)}</td><td class="num">${fmtMoney(deal.units * 15780)}</td><td class="num">${fmtMoney(deal.units * 16600)}</td></tr>
+          <tr><td>Cap Rate (implied)</td><td class="num">${deal.cap ? deal.cap.toFixed(2) : '4.32'}%</td><td class="num">4.78%</td><td class="num">5.24%</td><td class="num">5.49%</td><td class="num">5.78%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Trailing T-12 / T-3 <span class="sub">From rent roll · Nov 2025</span></div>
+      <table class="data-table">
+        <thead><tr><th></th><th class="num">T-12</th><th class="num">T-3</th><th class="num">UW Y1</th><th class="num">Δ T12 vs UW</th></tr></thead>
+        <tbody>
+          <tr><td>Effective Rent / Unit</td><td class="num">$1,948</td><td class="num">$1,978</td><td class="num">$2,108</td><td class="num">+8.2%</td></tr>
+          <tr><td>Occupancy</td><td class="num">94.2%</td><td class="num">94.8%</td><td class="num">93.5%</td><td class="num">(0.7)pt</td></tr>
+          <tr><td>NOI / Unit</td><td class="num">$11,820</td><td class="num">$12,140</td><td class="num">$12,400</td><td class="num">+4.9%</td></tr>
+          <tr><td>OpEx / Unit</td><td class="num">$8,084</td><td class="num">$8,140</td><td class="num">$8,200</td><td class="num">+1.4%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function buildContactsTab(deal) {
+  const ownerName = deal.owner === 'jack' ? 'Tyler' : deal.owner === 'eric' ? 'Sam' : 'Marcus Reed';
+  return `
+    <div class="grid-2">
+      <div class="modal-section">
+        <div class="modal-section-title">Brokerage</div>
+        <div class="contact-card">
+          <div class="contact-card-eyebrow">Lead Broker</div>
+          <div class="contact-name">${deal.broker.split('·')[1] ? deal.broker.split('·')[1].trim() : 'TBD'}</div>
+          <div class="contact-org">${deal.broker.split('·')[0].trim()}</div>
+          <div class="contact-info">
+            ${deal.brokerPhone || '—'}<br>
+            ${deal.brokerEmail || '—'}
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Seller</div>
+        <div class="contact-card">
+          <div class="contact-card-eyebrow">Owner</div>
+          <div class="contact-name">${deal.seller}</div>
+          <div class="contact-org">Disposition · ${deal.market}</div>
+          <div class="contact-info">Contact via broker</div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="modal-section">
+        <div class="modal-section-title">Equity Partner</div>
+        <div class="contact-card">
+          <div class="contact-card-eyebrow">Capital Partner</div>
+          <div class="contact-name">${deal.equityPartner || 'Meridian Capital VI'}</div>
+          <div class="contact-org">90% LP · 10% GP commitment</div>
+          <div class="contact-info">
+            Dana Ellis · IR Lead<br>
+            206.555.0140<br>
+            d.ellis@meridiancap.com
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Lender</div>
+        <div class="contact-card">
+          <div class="contact-card-eyebrow">Debt Origination</div>
+          <div class="contact-name">${deal.lender || 'TBD'}</div>
+          <div class="contact-org">${deal.stage === 'am' ? 'Closed loan' : 'Quoting'} · 65% LTV target</div>
+          <div class="contact-info">
+            Ray Patel<br>
+            415.555.0182<br>
+            r.patel@summitlenders.com
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Acme Team</div>
+      <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:12px;">
+        <div class="contact-card">
+          <div class="contact-card-eyebrow">Principal</div>
+          <div class="contact-name">Marcus Reed</div>
+          <div class="contact-org">Chief Acquisitions Officer</div>
+          <div class="contact-info">mreed@acmerealty.com</div>
+        </div>
+        <div class="contact-card">
+          <div class="contact-card-eyebrow">Principal</div>
+          <div class="contact-name">Alan Pierce</div>
+          <div class="contact-org">Managing Principal</div>
+          <div class="contact-info">apierce@acmerealty.com</div>
+        </div>
+        <div class="contact-card">
+          <div class="contact-card-eyebrow">Director</div>
+          <div class="contact-name">Sam Keller</div>
+          <div class="contact-org">Capital Markets</div>
+          <div class="contact-info">skeller@acmerealty.com</div>
+        </div>
+        <div class="contact-card">
+          <div class="contact-card-eyebrow">Analyst</div>
+          <div class="contact-name">Tyler Brooks</div>
+          <div class="contact-org">Acquisitions &amp; Underwriting</div>
+          <div class="contact-info">tbrooks@acmerealty.com</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildPhotosTab(deal) {
+  return `
+    <div class="modal-section">
+      <div class="modal-section-title">Property Photos <span class="sub">From OM + Google Earth</span></div>
+      <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:8px; height:380px;">
+        <div style="grid-row: 1 / 3; background:url(${deal.img}) center/cover; border-radius:8px;"></div>
+        <div style="background:url(${deal.img}) center/cover; border-radius:8px;"></div>
+        <div style="background:url(${deal.img}) center/cover; border-radius:8px;"></div>
+        <div style="background:url(${deal.img}) center/cover; border-radius:8px;"></div>
+        <div style="background:url(${deal.img}) center/cover; border-radius:8px; position:relative;">
+          <div style="position:absolute; inset:0; background:rgba(24,24,27,0.55); display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Fraunces',serif; font-size:18px; border-radius:8px;">+ 6 more</div>
+        </div>
+      </div>
+      <div style="margin-top:14px; display:flex; gap:14px; flex-wrap:wrap; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:0.04em;">
+        <span>Exterior · 4</span>
+        <span>·</span>
+        <span>Amenities · 3</span>
+        <span>·</span>
+        <span>Unit Interiors · 5</span>
+        <span>·</span>
+        <span>Aerial · 2</span>
+        <span>·</span>
+        <span>Google Earth synced</span>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Demographics <span class="sub">${deal.market} · 2025 ESRI</span></div>
+      ${demographics(deal)}
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Submarket Snapshot <span class="sub">CoStar + Yardi Matrix</span></div>
+      <div class="grid-3">
+        <div class="rm-stat">
+          <div class="rm-stat-label">Submarket Vacancy</div>
+          <div class="rm-stat-value">${deal.market === 'Phoenix' ? '3.8%' : deal.market === 'Seattle' ? '4.6%' : deal.market === 'Scottsdale' ? '4.1%' : '5.2%'}</div>
+          <div class="rm-stat-meta">Q4 2025 · Class A stabilized</div>
+        </div>
+        <div class="rm-stat">
+          <div class="rm-stat-label">YoY Rent Growth</div>
+          <div class="rm-stat-value">+${deal.market === 'Phoenix' ? '4.2' : deal.market === 'Seattle' ? '5.8' : deal.market === 'Scottsdale' ? '4.8' : '3.4'}%</div>
+          <div class="rm-stat-meta">Trailing 12 months</div>
+        </div>
+        <div class="rm-stat">
+          <div class="rm-stat-label">Pipeline Supply</div>
+          <div class="rm-stat-value">${deal.market === 'Phoenix' ? '1,200' : deal.market === 'Seattle' ? '2,400' : deal.market === 'Scottsdale' ? '380' : '720'}</div>
+          <div class="rm-stat-meta">Units within 1mi · 18 mo</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildDDITab(deal) {
+  const phases = generateChecklist(deal);
+  const checklistHTML = phases.map(p => {
+    const doneCount = p.items.filter(i => i.done).length;
+    return `
+      <div class="checklist-phase">
+        <div class="checklist-phase-head">
+          <span class="checklist-phase-name">${p.name}</span>
+          <span class="checklist-phase-progress">${doneCount} / ${p.items.length}</span>
+        </div>
+        <div class="checklist-items">
+          ${p.items.map(i => `
+            <div class="checklist-item">
+              <div class="checkbox ${i.done ? 'done' : i.inProgress ? 'in-progress' : ''}">${i.done ? '✓' : ''}</div>
+              <div class="item-text ${i.done ? 'done' : ''}">${i.txt}</div>
+              <div class="item-meta">${i.meta}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const totalItems = phases.reduce((s,p) => s + p.items.length, 0);
+  const doneItems = phases.reduce((s,p) => s + p.items.filter(i=>i.done).length, 0);
+
+  return `
+    <div class="modal-section">
+      <div class="modal-section-title">Due Diligence Items <span class="sub">${doneItems} of ${totalItems} complete · ${Math.round(doneItems/totalItems*100)}%</span></div>
+      ${checklistHTML}
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Deal Files <span class="sub">Drag &amp; drop · version history</span></div>
+      <div class="file-list">
+        <div class="file-row"><div class="file-icon pdf">PDF</div><div class="file-name">${deal.name.replace(/ /g,'_')}_OM_${deal.broker.split(' ')[0]}.pdf</div><div class="file-meta">2.4 MB · Oct 28</div></div>
+        <div class="file-row"><div class="file-icon xlsx">XLS</div><div class="file-name">${deal.name.replace(/ /g,'_')}_UW_Model_v3.xlsx</div><div class="file-meta">1.1 MB · Nov 10 · Tyler</div></div>
+        <div class="file-row"><div class="file-icon xlsx">XLS</div><div class="file-name">Rent_Roll_Nov25.xlsx</div><div class="file-meta">340 KB · Nov 8</div></div>
+        <div class="file-row"><div class="file-icon xlsx">XLS</div><div class="file-name">T12_Operating_Statements.xlsx</div><div class="file-meta">220 KB · Nov 8</div></div>
+        <div class="file-row"><div class="file-icon pdf">PDF</div><div class="file-name">Investment_Memo_Draft.pdf</div><div class="file-meta">880 KB · Nov 12</div></div>
+        <div class="file-row"><div class="file-icon docx">DOC</div><div class="file-name">Tour_Notes_${deal.name.replace(/ /g,'')}.docx</div><div class="file-meta">42 KB · Nov 3 · Marcus</div></div>
+        <div class="file-row"><div class="file-icon pdf">PDF</div><div class="file-name">Phase_I_ESA.pdf</div><div class="file-meta">${deal.stage === 'close' || deal.stage === 'am' ? '4.2 MB · Nov 22' : 'Pending'}</div></div>
+        <div class="file-row"><div class="file-icon jpg">IMG</div><div class="file-name">Property_Photos_OM.zip</div><div class="file-meta">38 MB · Oct 28 · 14 images</div></div>
+      </div>
+      <div class="upload-zone">+ Drop files to upload · OMs, models, PSAs, leases, photos · auto-tags by deal</div>
+    </div>
+  `;
+}
+
+function buildMemoTab(deal) {
+  const ownerName = deal.owner === 'jack' ? 'Tyler' : deal.owner === 'eric' ? 'Sam' : 'Marcus';
+  const equityReq = deal.equityReq || Math.round(deal.price * 0.37);
+  const isBiltmore = deal.id === 'biltmore-camelback';
+
+  const biltmoreThesis = `Phoenix's multifamily market is approaching a critical inflection point. After three years of supply-driven headwinds, new deliveries are set to plummet from current elevated levels to just 10,300 units in 2026 and 4,000 units in 2027 MSA-wide — a 70% reduction in supply precisely as employment-driven demand continues to accelerate. Desert Vista represents a rare value-add opportunity in Phoenix's most affluent submarket, acquired 30% below replacement cost with zero competing projects in the North Phoenix submarket through 2027.`;
+
+  const biltmoreLocation = `<strong>Zero competing deliveries</strong> through 2027 in the North Phoenix submarket. Immediate adjacency to 1.2M sq. ft. of Class A office space commanding the highest rents in the Phoenix MSA (recently renovated at $60M). a nearby regional town center (560,000 sq. ft., 98% leased) sits within walking distance alongside a premium fitness club and a dine-in theater — a walkable urban environment unique to this traditionally car-dependent market.`;
+
+  const biltmorePlan = `<strong>Phase 1 — Year 1:</strong> Deploy $400,000 for gym and pool amenity upgrades plus deferred maintenance. Implement bulk internet package generating $80/unit/month net income ($130 resident charge less $50 property cost) — a program proven across all Acme Class A Phoenix properties.<br><br><strong>Phase 2 — Years 2–5:</strong> Cosmetic unit interior renovations totaling $4,396,400, funded through operating cash flow beginning Month 13. Renovation premium: $386/month per unit. Renovation ROI: 28%.`;
+
+  const biltmoreAffordability = `Current rent-to-income ratio stands at 21% at as-is market rents, rising to 25% post-renovation — both well within Class A affordability thresholds. Median HH income of $98K within 1 mile (up 14% since 2020) supports absorption of renovation premiums without affordability strain.`;
+
+  const biltmoreRisks = `<li><strong>New supply</strong> — 1,200 units delivering within 1 mile over the next 18 months. Mitigant: zero competing deliveries in the North Phoenix submarket through 2027; Desert Vista's walkability and Class A office adjacency differentiate within the competitive set.</li>
+          <li><strong>Rent growth assumption</strong> — Year 2 UW assumes 6.87% growth vs. 5-year Phoenix avg of 4.2%. Mitigant: stress-test at 4.5% still clears hurdle rate.</li>
+          <li><strong>Property tax reassessment</strong> — Maricopa County 2026 cycle. Mitigant: UW already models a 10% bump in Y2.</li>
+          <li><strong>Renovation execution</strong> — Phase 2 begins Month 13; timeline risk if turnover lags. Mitigant: Acme has executed identical programs at Old Town Grand and North Spire.</li>`;
+
+  const biltmoreRec = `Team recommends IC approval to submit a binding LOI at the whisper price of <strong>$97,500,000 ($361,111/unit)</strong>. At a 30% discount to replacement cost, a protected submarket position through 2027, and a proven internet income program at comparable Acme assets, risk-adjusted returns are compelling. Project IRR of <strong>19.97%</strong> on a 5-year hold with a stabilized yield on cost of <strong>6.04%</strong>.`;
+
+  const genericThesis = `${deal.name} is a ${deal.units}-unit multifamily asset in the ${deal.market} submarket acquired at ${fmtPPU(deal.ppu)} per unit. The thesis is predicated on near-term supply compression, strong employment-driven demand, and a phased value-add renovation program. Stabilized YOC of ${fmtPct(deal.yoc)} provides durable income while the value-add program compounds IRR to ${fmtPct(deal.irr)} on a 5-year hold.`;
+
+  const genericRisks = `<li><strong>New supply</strong> — ${deal.market === 'Seattle' ? '2,400 units in metro pipeline' : '500+ units in submarket pipeline'}. Mitigant: asset's submarket position and amenity profile differentiate within the competitive set.</li>
+          <li><strong>Rent growth</strong> — UW assumes above-trend growth in Years 2–3. Recommend stress-test at conservative market avg.</li>
+          <li><strong>Property tax</strong> — County reassessment cycle could lift taxes 8–12%. UW models conservatively.</li>`;
+
+  const genericRec = `${ownerName} recommends ${deal.stage === 'ic' ? 'IC approval to submit a binding LOI at the whisper price' : deal.stage === 'uw' ? 'continued underwriting with a target IC vote in 2 weeks' : 'proceeding with active asset management per the approved business plan'}.`;
+
+  return `
+    <div class="modal-section" style="background:transparent; border:none; padding:0;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <span class="ai-badge">CLAUDE</span>
+          <span style="font-size:12px; color:var(--muted); font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:0.06em;">${isBiltmore ? 'Sourced from Investment Summary &middot; Oct 30 2025' : 'Auto-drafted &middot; click Generate to rebuild from latest data'}</span>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="nav-btn" style="font-size:12px;" onclick="alert('Edit mode available in full product')">Edit</button>
+          <button class="nav-btn" style="font-size:12px;" onclick="alert('Export to PDF available in full product')">Export PDF</button>
+          ${isBiltmore ? `` : `<button class="nav-btn" style="font-size:12px;" onclick="alert('Claude will regenerate the IC memo from the latest UW model, rent roll, and deal notes.')">&#8635; Generate</button>`}
+          <button class="nav-btn primary" style="font-size:12px;" onclick="alert('Memo sent to IC distribution list')">Send to IC</button>
+        </div>
+      </div>
+      <div class="memo-doc">
+        <div class="memo-eyebrow">ACME REAL ESTATE &middot; IC INVESTMENT MEMO &middot; CONFIDENTIAL</div>
+        <h3>${deal.name}</h3>
+        <p style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); margin-bottom:18px;">${deal.addr} &middot; ${deal.units} units &middot; Built ${deal.built || '&mdash;'} &middot; ${deal.type || 'Multifamily'} &middot; ${deal.market}</p>
+
+        <h4>Investment Thesis</h4>
+        <p>${isBiltmore ? biltmoreThesis : genericThesis}</p>
+
+        ${isBiltmore ? `<h4>Location Advantages &mdash; Desert Vista Corridor</h4><p>${biltmoreLocation}</p>` : ``}
+
+        <h4>Key Metrics</h4>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:4px;">
+          <tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:7px 0;color:var(--ink-soft);">Purchase Price</td>
+            <td style="padding:7px 0;font-family:'JetBrains Mono',monospace;color:var(--ink);text-align:right;">${fmtMoneyFull(deal.price)} <span style="color:var(--muted)">(${fmtPPU(deal.ppu)}/unit)</span></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:7px 0;color:var(--ink-soft);">Project IRR</td>
+            <td style="padding:7px 0;font-family:'JetBrains Mono',monospace;color:var(--ink);text-align:right;">${fmtPct(deal.irr)} <span style="color:var(--muted)">&middot; ${deal.em ? deal.em.toFixed(2) + 'x EM' : '&mdash;'} &middot; 5-yr hold</span></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:7px 0;color:var(--ink-soft);">Stabilized Yield on Cost</td>
+            <td style="padding:7px 0;font-family:'JetBrains Mono',monospace;color:var(--ink);text-align:right;">${fmtPct(deal.yoc)}</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:7px 0;color:var(--ink-soft);">In-place Cap Rate</td>
+            <td style="padding:7px 0;font-family:'JetBrains Mono',monospace;color:var(--ink);text-align:right;">${fmtPct(deal.cap)}</td>
+          </tr>
+          ${isBiltmore ? `<tr style="border-bottom:1px solid var(--line);"><td style="padding:7px 0;color:var(--ink-soft);">Basis vs. Replacement Cost</td><td style="padding:7px 0;font-family:'JetBrains Mono',monospace;color:var(--good);text-align:right;">30% discount</td></tr>` : ``}
+          <tr style="border-bottom:1px solid var(--line);">
+            <td style="padding:7px 0;color:var(--ink-soft);">Equity Required</td>
+            <td style="padding:7px 0;font-family:'JetBrains Mono',monospace;color:var(--ink);text-align:right;">${fmtMoneyFull(equityReq)} <span style="color:var(--muted)">(90% LP / 10% GP)</span></td>
+          </tr>
+          <tr>
+            <td style="padding:7px 0;color:var(--ink-soft);">Debt</td>
+            <td style="padding:7px 0;font-family:'JetBrains Mono',monospace;color:var(--ink);text-align:right;">${fmtMoneyFull(deal.price - equityReq)} <span style="color:var(--muted)">65% LTV &middot; 5-yr &middot; I/O</span></td>
+          </tr>
+        </table>
+
+        <h4>Business Plan</h4>
+        <p>${isBiltmore ? biltmorePlan : `Phase 1 targets amenity and common-area upgrades in Year 1 to stabilize occupancy above 93%. Phase 2 deploys a cosmetic unit renovation program beginning Month 13, funded through operating cash flow, targeting a $300–$400/month rent premium on renovated units at a projected ROI of 25–30%.`}</p>
+
+        ${isBiltmore ? `<h4>Affordability &amp; Demographics</h4><p>${biltmoreAffordability}</p>` : ``}
+
+        <h4>Risks &amp; Mitigants</h4>
+        <ul>${isBiltmore ? biltmoreRisks : genericRisks}</ul>
+
+        <h4>Recommendation</h4>
+        <p>${isBiltmore ? biltmoreRec : genericRec}</p>
+
+        <p style="margin-top:24px;padding-top:14px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;">Acme Real Estate Acquisitions Team &middot; Marcus Reed &middot; Alan Pierce &middot; Sam Keller &middot; Tyler Brooks &middot; ${isBiltmore ? 'October 30, 2025' : new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</p>
+      </div>
+    </div>
+  `;
+}
+
+
+function buildActivityTab(deal) {
+  return `
+    <div class="modal-section">
+      <div class="modal-section-title">Activity Timeline <span class="sub">All changes · email · model edits</span></div>
+      <div class="activity-list">
+        <div class="activity-item">
+          <div class="activity-time">2 hr ago</div>
+          <div class="activity-dot ai"></div>
+          <div class="activity-content"><strong>Claude flag posted</strong> — Y2 rent growth assumption above market average. Recommended stress-test at 4.5%.</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-time">Today · 9:14 AM</div>
+          <div class="activity-dot"></div>
+          <div class="activity-content"><strong>Tyler</strong> updated UW model — Exit cap moved 4.85% → 4.75%, IRR adjusted to ${fmtPct(deal.irr)}.</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-time">Yesterday</div>
+          <div class="activity-dot"></div>
+          <div class="activity-content"><strong>Sam</strong> attached debt quote from Wells Fargo · 65% LTV · 5.00% rate · I/O.</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-time">Nov 8</div>
+          <div class="activity-dot"></div>
+          <div class="activity-content"><strong>Marcus</strong> tagged Northgate Commons as a comp set match for this deal.</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-time">Nov 7</div>
+          <div class="activity-dot good"></div>
+          <div class="activity-content">Tour completed · ${deal.broker.split('·')[1] ? deal.broker.split('·')[1].trim() : 'broker'} hosted Marcus and Tyler onsite. Photos attached.</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-time">Nov 5</div>
+          <div class="activity-dot ai"></div>
+          <div class="activity-content"><strong>Claude</strong> auto-extracted rent roll from <em>Rent_Roll_Nov25.xlsx</em> · 270 units mapped to UW model.</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-time">Oct 30</div>
+          <div class="activity-dot"></div>
+          <div class="activity-content"><strong>Marcus</strong> moved deal from <em>Sourcing</em> → <em>Screening</em>.</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-time">Oct 28</div>
+          <div class="activity-dot"></div>
+          <div class="activity-content"><strong>OM ingested</strong> from <em>${deal.brokerEmail || 'broker'}</em> · auto-created deal record · routed to Marcus.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Email Thread <span class="sub">Linked from Outlook · 8 messages</span></div>
+      <div class="file-list">
+        <div class="file-row"><div class="file-icon">EML</div><div class="file-name">Re: ${deal.name} — best & final timing</div><div class="file-meta">${deal.broker.split('·')[1] ? deal.broker.split('·')[1].trim() : 'Broker'} · 2 hr ago</div></div>
+        <div class="file-row"><div class="file-icon">EML</div><div class="file-name">${deal.name} — Wells Fargo debt quote attached</div><div class="file-meta">Sam · Yesterday</div></div>
+        <div class="file-row"><div class="file-icon">EML</div><div class="file-name">${deal.name} — tour follow-up + photos</div><div class="file-meta">${deal.broker.split('·')[1] ? deal.broker.split('·')[1].trim() : 'Broker'} · Nov 8</div></div>
+        <div class="file-row"><div class="file-icon">EML</div><div class="file-name">${deal.name} — OM &amp; T-12</div><div class="file-meta">${deal.broker.split('·')[1] ? deal.broker.split('·')[1].trim() : 'Broker'} · Oct 28</div></div>
+      </div>
+    </div>
+  `;
+}
+
+// ============== MODAL OPEN/CLOSE ==============
+let currentDeal = null;
+let currentTab = 'summary';
+
+function buildModalHTML(deal, tab = 'summary') {
+  const ownerName = deal.owner === 'jack' ? 'Tyler' : deal.owner === 'eric' ? 'Sam' : 'Marcus';
+  const stagePill = `<span class="stage-pill ${stageLabels[deal.stage].cls}" style="font-size:11px; padding:5px 10px;">${stageLabels[deal.stage].name}</span>`;
+
+  let tabContent = '';
+  if (tab === 'summary') tabContent = buildSummaryTab(deal);
+  else if (tab === 'proforma') tabContent = buildProformaTab(deal);
+  else if (tab === 'contacts') tabContent = buildContactsTab(deal);
+  else if (tab === 'photos') tabContent = buildPhotosTab(deal);
+  else if (tab === 'ddi') tabContent = buildDDITab(deal);
+  else if (tab === 'memo') tabContent = buildMemoTab(deal);
+  else if (tab === 'activity') tabContent = buildActivityTab(deal);
+
+  const heroMetrics = `
+    <div class="hero-metrics">
+      <div class="hero-metric">
+        <div class="hero-metric-label">Acquisition</div>
+        <div class="hero-metric-value">${fmtMoney(deal.price)}</div>
+        <div class="hero-metric-meta">${fmtPPU(deal.ppu)} / unit</div>
+      </div>
+      <div class="hero-metric">
+        <div class="hero-metric-label">Project IRR</div>
+        <div class="hero-metric-value">${deal.irr ? deal.irr.toFixed(1) + '%' : '—'}</div>
+        <div class="hero-metric-meta">${deal.irr ? '5-year hold' : 'Pre-UW'}</div>
+      </div>
+      <div class="hero-metric">
+        <div class="hero-metric-label">Stabilized YOC</div>
+        <div class="hero-metric-value">${deal.yoc ? deal.yoc.toFixed(2) + '%' : '—'}</div>
+        <div class="hero-metric-meta">${deal.yoc ? 'Untrended' : ''}</div>
+      </div>
+      <div class="hero-metric">
+        <div class="hero-metric-label">Equity Multiple</div>
+        <div class="hero-metric-value">${deal.em ? deal.em.toFixed(2) + 'x' : '—'}</div>
+        <div class="hero-metric-meta">${deal.em ? '$' + Math.round((deal.equityReq || deal.price * 0.37) / 1e6) + 'M equity' : ''}</div>
+      </div>
+      <div class="hero-metric">
+        <div class="hero-metric-label">In-Place Cap</div>
+        <div class="hero-metric-value">${deal.cap ? deal.cap.toFixed(2) + '%' : '—'}</div>
+        <div class="hero-metric-meta">${deal.cap ? 'FY1' : ''}</div>
+      </div>
+      <div class="hero-metric">
+        <div class="hero-metric-label">Units</div>
+        <div class="hero-metric-value">${deal.units}</div>
+        <div class="hero-metric-meta">Built ${deal.built || '—'}</div>
+      </div>
+    </div>
+  `;
+
+  const tabs = ['summary','proforma','contacts','photos','ddi','memo','activity'];
+  const tabNames = { summary: 'Deal Summary', proforma: 'Proforma Model', contacts: 'Contacts', photos: 'Photos & Demographics', ddi: 'DDI', memo: 'IC Memo', activity: 'Activity' };
+
+  return `
+    <div class="modal-head">
+      <div class="modal-head-row">
+        <div>
+          <div class="modal-eyebrow">${deal.type || 'Multifamily'} · ${deal.units} Units · Built ${deal.built || '—'}</div>
+          <h2 class="modal-title">${deal.name}</h2>
+          <div class="modal-address">${deal.addr}</div>
+          <div style="margin-top:10px;">${stagePill}</div>
+        </div>
+        <div class="modal-actions">
+          <div class="modal-meta" style="margin-right:8px;">
+            <div>Broker: <strong style="color:var(--ink)">${deal.broker.split('·')[0].trim()}</strong></div>
+            <div>Seller: <strong style="color:var(--ink)">${deal.seller || '—'}</strong></div>
+          </div>
+          <button class="icon-btn" title="Share">↗</button>
+          <button class="icon-btn" title="Export">↓</button>
+          <button class="close-btn" onclick="closeDeal()">✕</button>
+        </div>
+      </div>
+      <div class="modal-tabs">
+        ${tabs.map(t => `<button class="modal-tab ${t === tab ? 'active' : ''}" onclick="switchTab('${t}')">${tabNames[t]}</button>`).join('')}
+      </div>
+    </div>
+    ${tab === 'summary' ? heroMetrics : ''}
+    <div class="modal-body">${tabContent}</div>
+  `;
+}
+
+function openDeal(id) {
+  const deal = deals.find(d => d.id === id);
+  if (!deal) return;
+  currentDeal = deal;
+  currentTab = 'summary';
+  document.getElementById('modalContent').innerHTML = buildModalHTML(deal, 'summary');
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  // scroll modal to top
+  document.getElementById('modal').scrollTop = 0;
+}
+
+function switchTab(tab) {
+  if (!currentDeal) return;
+  currentTab = tab;
+  document.getElementById('modalContent').innerHTML = buildModalHTML(currentDeal, tab);
+  // Scroll modal back to top on tab switch
+  const modalEl = document.querySelector('.modal-backdrop');
+  if (modalEl) modalEl.scrollTop = 0;
+}
+
+function closeDeal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+  currentDeal = null;
+}
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeDeal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDeal();
+});
+
+// ============== BOOT ==============
+renderPipeline();
+renderTable('all');
+initMap();
+</script>
+
+</body>
+</html>
